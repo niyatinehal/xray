@@ -107,7 +107,7 @@ const flows = config.flows.map((cf, i) => {
   if (!steps) { problems.push(`flow ${i} ("${cf.title}"): no candidate flow "${cf.from}" and no inline steps`); return null; }
   steps = steps.filter((s) => !(cf.hideBranches || []).includes(s.branch));
   if (cf.include) steps = cf.include.map((k) => steps[k]).filter(Boolean);
-  return { id: cf.from || `flow:${i}`, title: cf.title, caption: cf.caption || "", steps, failureSteps: (cf.steps || byId[cf.from]?.steps || []).filter((s) => s.branch === "failure") };
+  return { id: cf.from || `flow:${i}`, trigger: byId[cf.from]?.trigger || cf.trigger || null, title: cf.title, caption: cf.caption || "", steps, failureSteps: (cf.steps || byId[cf.from]?.steps || []).filter((s) => s.branch === "failure") };
 }).filter(Boolean);
 
 const nodeIds = new Set(system.nodes.map((n) => n.id));
@@ -115,7 +115,11 @@ for (const f of flows) for (const s of f.steps) for (const id of [s.from, s.to])
 if (problems.length) { console.error("config problems:\n  " + problems.join("\n  ")); process.exit(1); }
 
 // ---------- redaction (for posting publicly) ----------
-let data = { system, config, flows, builtAt: new Date().toISOString() };
+// real numbers from measure.mjs, if present
+const measuredPath = path.join(outDir, "measured.json");
+const measured = fs.existsSync(measuredPath) ? JSON.parse(fs.readFileSync(measuredPath, "utf8")) : null;
+if (measured && config.useMeasured === false) console.log("  measured.json present but useMeasured is false — showing estimates");
+let data = { system, config, flows, measured: config.useMeasured === false ? null : measured, builtAt: new Date().toISOString() };
 if (config.redact) {
   const mapFile = new Map();
   const hide = (f) => { if (!mapFile.has(f)) mapFile.set(f, `file-${String(mapFile.size + 1).padStart(2, "0")}.js`); return mapFile.get(f); };
@@ -153,5 +157,5 @@ const html = template
 const outFile = path.join(outDir, "xray.html");
 fs.writeFileSync(outFile, html);
 const kb = Math.round(Buffer.byteLength(html) / 1024);
-console.log(`built ${path.relative(process.cwd(), outFile)} (${kb} KB, ${flows.length} flows, ${system.nodes.length} nodes)${config.redact ? " [redacted]" : ""}`);
+console.log(`built ${path.relative(process.cwd(), outFile)} (${kb} KB, ${flows.length} flows, ${system.nodes.length} nodes)${config.redact ? " [redacted]" : ""}${data.measured ? ` · real numbers from ${data.measured.source}` : " · estimated numbers (run measure.mjs for real ones)"}`);
 if (kb > 1024) console.log("  warning: over 1 MB — link previews on social sites may not render");
