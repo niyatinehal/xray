@@ -12,8 +12,8 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:#AEB8C2;overflow:hidden;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink)}
-#fit{position:fixed;inset:0;display:grid;place-items:center}
-#stage{position:relative;width:1600px;height:900px;transform-origin:center;background:radial-gradient(120% 90% at 50% 35%,var(--studio) 0%,var(--studio-deep) 100%);overflow:hidden}
+#fit{position:fixed;inset:0;overflow:hidden}
+#stage{position:absolute;left:0;top:0;width:1600px;height:900px;transform-origin:0 0;background:radial-gradient(120% 90% at 50% 35%,var(--studio) 0%,var(--studio-deep) 100%);overflow:hidden}
 #gl{position:absolute;inset:0;width:1600px;height:900px;display:block}
 #labels,#overlay{position:absolute;inset:0;pointer-events:none}
 .lbl{position:absolute;transform:translate(-50%,-100%);white-space:nowrap;font-size:12px;line-height:1.25;text-align:center;padding:3px 7px;border-radius:4px;background:rgba(248,250,252,.82);border:1px solid var(--line);pointer-events:auto;cursor:pointer;transition:opacity .25s}
@@ -34,7 +34,7 @@ html,body{margin:0;height:100%;background:#AEB8C2;overflow:hidden;font-family:ui
 #head .sub{margin:4px 0 12px;color:var(--muted);font-size:12.5px;line-height:1.4}
 #big{font-size:54px;font-weight:700;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
 #big small{font-size:22px;font-weight:600;margin-left:3px;color:var(--muted)}
-#bigcap{font-size:12px;color:var(--muted);margin-top:4px}
+#bigcap{font-size:12px;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #kpis{display:flex;gap:18px;margin-top:12px;font-size:12px;color:var(--muted)}
 #kpis span b{display:block;font-size:17px;color:var(--ink);font-variant-numeric:tabular-nums}
 #kpis .bad b{color:var(--bad)}
@@ -65,8 +65,8 @@ button.b.on{background:var(--ink);border-color:var(--ink);color:#fff}
 .g .bar{height:7px;border-radius:4px;background:rgba(0,0,0,.08);overflow:hidden}
 .g .bar i{display:block;height:100%;background:var(--ink);border-radius:4px}
 .g .v{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
-.g.warn .bar i{background:var(--accent)}
-.g.over .bar i{background:var(--bad)} .g.over .v{color:var(--bad);font-weight:650}
+.g.warn .bar i{background:var(--accent)!important}
+.g.over .bar i{background:var(--bad)!important} .g.over .v{color:var(--bad);font-weight:650}
 .sep{height:1px;background:var(--line);margin:9px 0}
 canvas.ch{width:272px;height:62px;display:block;margin-top:4px}
 .chl{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:8px}
@@ -93,13 +93,32 @@ canvas.ch{width:272px;height:62px;display:block;margin-top:4px}
 .ev{margin-top:4px;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ev code.f{color:var(--ink);margin-right:8px}
 #est{position:absolute;right:20px;bottom:18px;width:300px;padding:10px 14px;font-size:11.5px;color:var(--muted);line-height:1.4}
-#est b{color:var(--ink)}
+#est b{color:var(--ink)}#est .meas{color:#0b7a5a}#est .warnt{color:#b45309}
+.mtag{display:inline-block;font-size:10px;font-weight:650;padding:1px 5px;border-radius:3px;margin-left:4px;vertical-align:1px}
+.mtag.m{background:#d3f4e8;color:#0b7a5a}.mtag.e{background:rgba(0,0,0,.06);color:var(--muted)}
+.tag .src{font-size:10px;opacity:.75;margin-left:4px}
 
 #cursor{position:absolute;left:0;top:0;width:22px;height:22px;pointer-events:none;z-index:20;opacity:0;transition:opacity .3s}
 #cursor svg{filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.35))}
 #ripple{position:absolute;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;border:2px solid var(--accent);pointer-events:none;opacity:0;z-index:19}
 #mode{position:absolute;left:50%;top:16px;transform:translateX(-50%);font-size:11.5px;color:var(--muted);background:rgba(248,250,252,.7);padding:3px 9px;border-radius:10px;border:1px solid var(--line)}
-.hidepanels .panel,.hidepanels #mode{display:none!important}
+.hidepanels .panel,.hidepanels #mode,.hidepanels #legend{display:none!important}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:1px}
+.flow .dots{display:flex;gap:3px;margin-top:5px}.flow .dots i{width:14px;height:4px;border-radius:2px;display:block}
+#legend{position:absolute;left:50%;top:44px;transform:translateX(-50%);display:flex;gap:4px;background:rgba(248,250,252,.82);border:1px solid var(--line);border-radius:8px;padding:4px}
+#legend button{font:inherit;font-size:11.5px;border:0;background:transparent;padding:4px 8px;border-radius:5px;cursor:pointer;color:var(--ink);display:flex;align-items:center;gap:6px}
+#legend button i{width:16px;height:4px;border-radius:2px;display:block}
+#legend button:hover{background:rgba(0,0,0,.05)}
+#legend button.off{color:#9aa4ae;text-decoration:line-through}#legend button.off i{opacity:.25}
+#tip{position:absolute;pointer-events:none;z-index:15;background:var(--ink);color:#fff;font-size:12px;line-height:1.35;padding:7px 10px;border-radius:6px;max-width:280px;display:none;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+#tip b{font-weight:650}#tip .k{color:#aab4bf;font-size:11px}#tip .h{color:#ffd480;font-size:11px;margin-top:3px}
+#tl{display:flex;gap:4px;align-items:center;float:right;margin:-2px 0 4px 8px}
+#tl button{font:inherit;font-size:13px;width:28px;height:24px;border:1px solid var(--line);background:#fff;border-radius:5px;cursor:pointer;color:var(--ink);line-height:1}
+#tl button:hover{border-color:var(--ink)}#tl button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chip{cursor:pointer;border-left:3px solid transparent}.chip:hover{background:rgba(0,0,0,.09)}
+.wi{margin:6px 0 2px;font-size:12px}.wi .row{margin:4px 0}.wi .row label{width:70px}
+.fl{display:flex;align-items:center;justify-content:space-between;gap:6px}.fl button{flex:0 0 auto}
+button:focus-visible,input:focus-visible{outline:2px solid #4c6ef5;outline-offset:2px}
 </style>
 </head>
 <body>
@@ -140,6 +159,7 @@ canvas.ch{width:272px;height:62px;display:block;margin-top:4px}
   <div id="insp" class="panel"><button class="b x" id="inspx">Close</button><div id="inspbody"></div></div>
 
   <div id="steps" class="panel">
+    <div id="tl"><button id="tl-prev" title="Previous step (←)">‹</button><button id="tl-play" title="Pause / play (space)">❚❚</button><button id="tl-next" title="Next step (→)">›</button><button id="tl-ride" title="Camera follows the request (F)">◎</button></div>
     <div id="chips"></div>
     <div id="stepnow"><span class="k"></span><span class="t">Pick a request on the left to follow it through the system.</span></div>
     <div class="ev" id="stepev"></div>
@@ -147,6 +167,8 @@ canvas.ch{width:272px;height:62px;display:block;margin-top:4px}
   <div id="est" class="panel"></div>
 
   <div id="mode"></div>
+  <div id="legend" role="group" aria-label="Show or hide kinds of traffic"></div>
+  <div id="tip"></div>
   <div id="ripple"></div>
   <div id="cursor"><svg width="22" height="22" viewBox="0 0 22 22"><path d="M3 2 L3 18 L7.5 14 L10.5 20.5 L13 19.4 L10.1 13 L16 13 Z" fill="#fff" stroke="#18202A" stroke-width="1.4" stroke-linejoin="round"/></svg></div>
 </div></div>
@@ -182,15 +204,36 @@ FLOWS.forEach((f) => {
 const delayedQueues = new Set();
 FLOWS.forEach((f) => f.steps.forEach((s) => { if (s.kind === "enqueue" && s.delayMs) delayedQueues.add(s.to); }));
 
+const WHATIF = { conc: {}, lat: {} };
+// measured numbers from production traces / metrics (measure.mjs), when present
+const MEAS = DATA.measured || null;
+const mtok = (x) => String(x || "").toLowerCase().replace(/[^a-z0-9]/g, "").replace(/(ies)$/, "y").replace(/s$/, "");
+function measuredFor(s) {
+  if (!MEAS) return null;
+  const h = MEAS.hops?.[s.from + ">" + s.to]; if (!h) return null;
+  for (const t of String(s.label).split(/[^A-Za-z0-9]+/).map(mtok).filter((x) => x.length > 1)) { const l = h.labels?.[t]; if (l && l.p50 != null) return { ...h, ...l, perLabel: true }; }
+  return h.p50 != null ? h : null;
+}
+function measuredPartner(id) {
+  if (!MEAS) return null;
+  return Object.values(MEAS.hops || {}).filter((h) => h.to === id && h.p50 != null).sort((a, b) => (b.count || 0) - (a.count || 0))[0] || null;
+}
+const flowRps = (f) => MEAS?.entries?.[f.trigger]?.rps ?? null;
+// a span for a hand-off, an inter-service request or a job includes everything that happens inside it,
+// so only "leaf" hops feed their measured time into the end-to-end sum (no double counting)
+const WRAPS = new Set(["http", "call", "consume", "deliver"]);
+const measuredLeaf = (s) => (WRAPS.has(s.kind) ? null : measuredFor(s));
 function partnerMs(id, c) {
   const n = NODES[id] || {};
   if (c.outage[id]) {
     const retries = n.retries ?? (EST.partnerRetries || {})[id] ?? 3;
     return (n.timeoutMs || 15000) * retries;
   }
-  return (EST.partnerLatencyMs || {})[id] ?? (EST.hopMs || {}).partner ?? 450;
+  return WHATIF.lat[id] ?? measuredPartner(id)?.p50 ?? (EST.partnerLatencyMs || {})[id] ?? (EST.hopMs || {}).partner ?? 450;
 }
 function hopMs(s, c) {
+  if (s.kind === "partner" && (c.outage?.[s.to] || WHATIF.lat[s.to] != null)) return partnerMs(s.to, c);
+  const m = measuredLeaf(s); if (m) return m.p50;
   if (s.kind === "partner") return partnerMs(s.to, c);
   return (EST.hopMs || {})[s.kind] ?? ({ call: 1 })[s.kind] ?? 10;
 }
@@ -215,14 +258,18 @@ function workMs(q, c) {
   const ws = workSteps(q); if (!ws) return 50;
   return ((EST.hopMs || {}).consume ?? 25) + ws.filter((s) => ["emit", "enqueue", "db-read", "db-write", "partner"].includes(s.kind)).reduce((a, s) => a + hopMs(s, c), 0);
 }
-function concurrencyOf(q) { const n = NODES[q]; return (n && n.concurrency) || 1; }
+function concurrencyOf(q) { const n = NODES[q]; return WHATIF.conc[q] ?? ((n && n.concurrency) || MEAS?.queues?.[q]?.observedConcurrency || 1); }
 
 function rates(c) {
-  const base = (CFG.traffic?.baseRps ?? 8) * c.load;
-  const node = {}, edge = {}, enq = {}, partnerCalls = {}; let failing = 0;
+  const estBase = (CFG.traffic?.baseRps ?? 8) * c.load;
+  const node = {}, edge = {}, enq = {}, partnerCalls = {}; let failing = 0, base = 0;
   const add = (o, k, v) => (o[k] = (o[k] || 0) + v);
   for (const f of FLOWS) {
-    const r = base * f.share;
+    const real = flowRps(f);
+    const r = real != null ? real * c.load : estBase * f.share;
+    base += r;
+    // real error rates on outside calls, when measured
+    if (!f.partners.some((p) => c.outage[p])) for (const s of f.steps) if (s.kind === "partner") { const m = measuredFor(s); if (m?.errorRate) failing += r * m.errorRate; }
     const down = f.partners.some((p) => c.outage[p]);
     for (const s of f.steps) {
       add(edge, s.from + ">" + s.to, r);
@@ -270,7 +317,7 @@ function metrics(S, c, flowIdx) {
   for (const q of queueIds) {
     const delayed = delayedQueues.has(q);
     const mu = delayed ? Infinity : concurrencyOf(q) * 1000 / workMs(q, c);
-    qinfo[q] = { lam: R.enq[q] || 0, mu, depth: S.depth[q], delayed, util: delayed ? 0 : (R.enq[q] || 0) / mu, waitMs: delayed ? 0 : S.depth[q] / mu * 1000 };
+    qinfo[q] = { lam: R.enq[q] || 0, mu, depth: S.depth[q], delayed, util: delayed ? 0 : (R.enq[q] || 0) / mu, waitMs: delayed ? 0 : S.depth[q] / mu * 1000 + (MEAS?.queues?.[q]?.waitP50 ?? 0) };
   }
   let bottleneck = null, worst = -1;
   for (const q of queueIds) if (!qinfo[q].delayed && qinfo[q].util > worst) { worst = qinfo[q].util; bottleneck = q; }
@@ -310,14 +357,25 @@ Object.assign(sun.shadow.camera, { left: -60, right: 60, top: 40, bottom: -40, n
 scene.add(sun);
 const floor = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.ShadowMaterial({ opacity: 0.13 }));
 floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+const grid = new THREE.GridHelper(240, 80, 0xb9c3cd, 0xcfd6dd); grid.position.y = 0.005; grid.material.transparent = true; grid.material.opacity = 0.55; scene.add(grid);
 
-const COL = { graphite: 0x2a3038, graphite2: 0x343b45, plinth: 0xd7dde3, metal: 0xb7c0c9, accent: 0xf2a100, bad: 0xe0464c, liquid: 0x2f78b5, glass: 0xdfe8f0, light: 0xf3f5f7, edge: 0x9aa5b1 };
+const COL = { graphite: 0x2a3038, graphite2: 0x343b45, plinth: 0xd7dde3, metal: 0xb7c0c9, accent: 0xf2a100, bad: 0xe0464c, liquid: 0x0ca5a5, glass: 0xdfe8f0, light: 0xf3f5f7, edge: 0x9aa5b1 };
+// colour does a job: each service has an identity hue; each pipe is coloured by what travels in it
+const HUE = [0xe64980, 0x37b24d, 0x4c6ef5, 0xf59f00, 0x15aabf, 0xae3ec9, 0x82c91e, 0xfd7e14, 0x7048e8, 0x0ca678, 0xf03e3e, 0x1c7ed6];
+const KC = { request: 0x39424e, data: 0x3b82c4, event: 0x8b5cf6, job: 0x0ca5a5, outside: 0xe8870e };
+const KGROUP = { http: "request", call: "hand-off", "db-read": "data", "db-write": "data", emit: "event", deliver: "event", enqueue: "job", consume: "job", partner: "outside" };
+const KLABEL = { request: "Requests", "hand-off": "Hand-offs", data: "Database", event: "Events", job: "Jobs", outside: "Outside calls" };
+const hex = (c) => "#" + c.toString(16).padStart(6, "0");
+const NCOL = {};
+const kindColor = (kind, from) => KGROUP[kind] === "hand-off" ? (NCOL[from] ?? 0x6b7686) : KC[KGROUP[kind]] ?? 0x9aa5b1;
 const mat = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: o.r ?? 0.5, metalness: o.m ?? 0.15, transparent: true, opacity: o.op ?? 1, emissive: o.em ?? 0x000000 });
 
 // ---------- layout ----------
 const order = [];
 FLOWS.forEach((f) => f.steps.forEach((s) => [s.from, s.to].forEach((id) => { if (NODES[id]?.kind === "service" && !order.includes(id)) order.push(id); })));
 serviceIds.sort().forEach((id) => { if (!order.includes(id)) order.push(id); });
+order.forEach((id, i) => (NCOL[id] = HUE[i % HUE.length]));
+for (const n of SYS.nodes) if (NCOL[n.id] == null) NCOL[n.id] = n.kind === "database" ? (n.id.startsWith("cache:") ? 0x60a5fa : KC.data) : n.kind === "bus" ? KC.event : n.kind === "queue" ? KC.job : n.kind === "partner" ? KC.outside : n.kind === "app" ? (HUE[(order.length + 2) % HUE.length]) : KC.request;
 const pos = {};
 const SP = 7.2;
 const perRow = order.length > 8 ? Math.ceil(order.length / 2) : order.length;
@@ -357,7 +415,8 @@ for (const id of order) {
     m.position.y = 0.3 + fh / 2 + i * (fh + 0.06); m.userData.baseY = m.position.y; m.userData.domain = d; g.add(m); floors.push(m);
   });
   const topY = 0.3 + domains.length * (fh + 0.06);
-  const cap = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.12, 2.9), mat(COL.metal, { r: 0.45, m: 0.5, em: 0x000000 })); cap.position.y = topY + 0.06; g.add(cap);
+  const cap = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.16, 2.9), mat(NCOL[id], { r: 0.4, m: 0.2, em: 0x000000 })); cap.position.y = topY + 0.08; g.add(cap);
+  const band = new THREE.Mesh(new THREE.BoxGeometry(3.58, 0.16, 2.88), mat(NCOL[id], { r: 0.45, m: 0.1 })); band.position.y = 0.38; g.add(band);
   (n.workers || []).forEach((w, i) => {
     const wk = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 1.3, 20), mat(COL.graphite2, { r: 0.45, m: 0.3 }));
     wk.position.set(-2.55, 0.3 + 0.65, -0.9 + i * 1.0); g.add(wk);
@@ -368,15 +427,15 @@ for (const n of clients) {
   const g = new THREE.Group(); g.position.copy(pos[n.id]);
   const base = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.2, 1.6), mat(COL.plinth, { r: 0.8 })); base.position.y = 0.1; g.add(base);
   const screen = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.7, 0.18), mat(COL.light, { r: 0.6 })); screen.position.set(0, 1.25, 0); g.add(screen);
-  const face = new THREE.Mesh(new THREE.BoxGeometry(2.3, 1.4, 0.05), mat(COL.graphite, { r: 0.35, m: 0.2 })); face.position.set(0, 1.25, 0.11); g.add(face);
+  const face = new THREE.Mesh(new THREE.BoxGeometry(2.3, 1.4, 0.05), mat(n.kind === "app" ? NCOL[n.id] : COL.graphite, { r: 0.35, m: 0.2 })); face.position.set(0, 1.25, 0.11); g.add(face);
   g.rotation.y = Math.PI / 2;
   reg(n.id, g, 2.3);
 }
 for (const n of parts) {
   const g = new THREE.Group(); g.position.copy(pos[n.id]);
   const body = new THREE.Mesh(new THREE.BoxGeometry(2.0, 4.2, 2.0), mat(COL.light, { r: 0.55 })); body.position.y = 2.1; g.add(body);
-  const top = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.5, 2.1), mat(COL.graphite, { r: 0.45, m: 0.3 })); top.position.y = 4.45; g.add(top);
-  const band = new THREE.Mesh(new THREE.BoxGeometry(2.04, 0.18, 2.04), mat(COL.metal, { r: 0.5 })); band.position.y = 1.2; g.add(band);
+  const top = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.5, 2.1), mat(KC.outside, { r: 0.4, m: 0.2 })); top.position.y = 4.45; g.add(top);
+  const band = new THREE.Mesh(new THREE.BoxGeometry(2.04, 0.18, 2.04), mat(KC.outside, { r: 0.5 })); band.position.y = 1.2; g.add(band);
   const o = reg(n.id, g, 4.9); o.body = body; o.top = top;
 }
 for (const n of DBS) {
@@ -384,7 +443,7 @@ for (const n of DBS) {
   const small = n.id.startsWith("cache:"); const rad = small ? 2.0 : 3.2, layers = small ? 2 : 3;
   for (let i = 0; i < layers; i++) {
     const d = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, 0.95, 48), mat(i % 2 ? COL.graphite2 : COL.graphite, { r: 0.45, m: 0.35 })); d.position.y = 0.5 + i * 1.08; g.add(d);
-    const ring = new THREE.Mesh(new THREE.CylinderGeometry(rad + 0.04, rad + 0.04, 0.08, 48), mat(small ? COL.bad : COL.metal, { r: 0.5, m: 0.5 })); ring.position.y = 1.0 + i * 1.08; g.add(ring);
+    const ring = new THREE.Mesh(new THREE.CylinderGeometry(rad + 0.04, rad + 0.04, 0.08, 48), mat(NCOL[n.id], { r: 0.45, m: 0.2 })); ring.position.y = 1.0 + i * 1.08; g.add(ring);
   }
   reg(n.id, g, layers * 1.08 + 0.4);
 }
@@ -393,7 +452,7 @@ if (NODES["bus:events"]) {
   const len = (maxX - minX) + 8;
   const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, len, 24), mat(COL.metal, { r: 0.45, m: 0.6 }));
   rail.rotation.z = Math.PI / 2; rail.position.set((minX + maxX) / 2, 0.45, BUS_Z); g.add(rail);
-  const strip = new THREE.Mesh(new THREE.BoxGeometry(len, 0.06, 0.12), mat(COL.graphite, { r: 0.45 })); strip.position.set((minX + maxX) / 2, 0.8, BUS_Z); g.add(strip);
+  const strip = new THREE.Mesh(new THREE.BoxGeometry(len, 0.08, 0.16), mat(KC.event, { r: 0.4, em: 0x1d0f4a })); strip.position.set((minX + maxX) / 2, 0.8, BUS_Z); g.add(strip);
   for (let x = minX - 3; x <= maxX + 3; x += 3.6) { const leg = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.3, 0.5), mat(COL.graphite)); leg.position.set(x, 0.15, BUS_Z); g.add(leg); }
   const o = reg("bus:events", g, 1.4); o.anchor = new THREE.Vector3(maxX + 4.6, 1.4, BUS_Z);
 }
@@ -402,7 +461,7 @@ for (const q of queueIds) {
   const glass = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.75, 2.6, 32, 1, true), new THREE.MeshStandardMaterial({ color: COL.glass, roughness: 0.15, metalness: 0, transparent: true, opacity: 0.32, side: THREE.DoubleSide, depthWrite: false }));
   glass.position.y = 1.55; g.add(glass);
   const base = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, 0.25, 32), mat(COL.graphite)); base.position.y = 0.12; g.add(base);
-  const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, 0.12, 32), mat(COL.metal, { m: 0.5 })); lid.position.y = 2.9; g.add(lid);
+  const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, 0.14, 32), mat(KC.job, { r: 0.4, m: 0.2 })); lid.position.y = 2.9; g.add(lid);
   const liquid = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.68, 1, 32), mat(COL.liquid, { r: 0.3, op: 0.9 }));
   liquid.position.y = 0.25; liquid.scale.y = 0.001; g.add(liquid);
   const o = reg(q, g, 3.3); o.liquid = liquid; o.glass = glass;
@@ -445,14 +504,17 @@ function curveFor(s, emitterX) {
   }
 }
 const edgeObjs = {};
-const edgeMat = () => new THREE.MeshStandardMaterial({ color: COL.edge, roughness: 0.6, transparent: true, opacity: 0.55 });
+const edgeMat = (c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.55, transparent: true, opacity: 0.55, emissive: 0x000000 });
 function ensureEdge(s) {
   const key = s.from + ">" + s.to;
   if (edgeObjs[key]) return edgeObjs[key];
   const c = curveFor(s);
-  const m = new THREE.Mesh(new THREE.TubeGeometry(c, 48, s.kind === "deliver" || s.kind === "emit" ? 0.05 : 0.045, 6, false), edgeMat());
-  scene.add(m);
-  return (edgeObjs[key] = { key, mesh: m, curve: c, from: s.from, to: s.to, kind: s.kind });
+  const color = kindColor(s.kind, s.from);
+  const m = new THREE.Mesh(new THREE.TubeGeometry(c, 48, 0.06, 6, false), edgeMat(color));
+  m.userData.edge = key; scene.add(m);
+  // a fat invisible twin makes thin pipes easy to hover and click
+  const hit = new THREE.Mesh(new THREE.TubeGeometry(c, 24, 0.35, 5, false), new THREE.MeshBasicMaterial({ visible: false })); hit.userData.edge = key; scene.add(hit);
+  return (edgeObjs[key] = { key, mesh: m, hit, curve: c, from: s.from, to: s.to, kind: s.kind, group: KGROUP[s.kind], color });
 }
 FLOWS.forEach((f) => [...f.steps, ...f.failureSteps].forEach(ensureEdge));
 SYS.edges.forEach((e) => ensureEdge(e));
@@ -503,7 +565,8 @@ $("#subtitle").textContent = CFG.subtitle || "";
 const flowList = $("#flowlist");
 FLOWS.forEach((f, i) => {
   const b = document.createElement("button"); b.className = "flow"; b.id = "flow-" + i;
-  b.innerHTML = `<span class="n">${f.steps.length} hops</span><div class="t"></div><div class="c"></div>`;
+  const touched = [...new Set(f.steps.flatMap((s) => [s.from, s.to]).filter((x) => NODES[x]?.kind === "service"))];
+  b.innerHTML = `<span class="n">${f.steps.length} hops</span><div class="t"></div><div class="c"></div><div class="dots">${touched.map((id) => `<i style="background:${hex(NCOL[id])}" title="${esc(short(id))}"></i>`).join("")}</div>`;
   b.querySelector(".t").textContent = f.title; b.querySelector(".c").textContent = f.caption || [...new Set(f.steps.map((s) => s.to).filter((x) => NODES[x]?.kind === "service"))].map(short).join(" → ");
   b.onclick = () => userAction(() => playFlow(i, false));
   flowList.appendChild(b);
@@ -545,13 +608,22 @@ if (NODES["bus:events"]) VIEWS["Event bus"] = fitView(["bus:events", ...order], 
 if (parts.length) VIEWS.Outside = fitView([...parts.map((p) => p.id), ...new Set(parts.map((p) => p.owner).filter((o) => pos[o]))], -0.75, 1.02, 0.12);
 const viewBox = $("#views");
 Object.keys(VIEWS).forEach((v) => { const b = document.createElement("button"); b.className = "b"; b.textContent = v; b.id = "view-" + v.replace(/\s/g, ""); b.onclick = () => userAction(() => setView(v)); viewBox.appendChild(b); });
-$("#est").innerHTML = `<b>Read from code:</b> services, routes, events, queues, worker concurrency${parts.some((p) => p.timeoutMs) ? ", partner timeouts" : ""}. <b>Estimated:</b> hop latencies and base traffic (${CFG.traffic?.baseRps ?? 8} req/s). ${EST.note ? "" : ""}`;
+{
+  const allSteps = FLOWS.flatMap((f) => f.steps).filter((s) => s.kind !== "http" || NODES[s.from]?.kind !== "external");
+  const nMeasured = allSteps.filter((s) => measuredFor(s)).length;
+  const realTraffic = FLOWS.some((f) => flowRps(f) != null);
+  const fromCode = `<b>From code:</b> services, routes, events, queues, worker counts${parts.some((p) => p.timeoutMs) ? ", timeouts" : ""}.`;
+  const unexp = MEAS?.unexpected?.length ? ` <b class="warnt">Production also calls ${MEAS.unexpected.length} thing${MEAS.unexpected.length > 1 ? "s" : ""} the code map doesn't show:</b> ${MEAS.unexpected.slice(0, 2).map((u) => `${esc(u.fromLabel)} → ${esc(u.toLabel)}`).join(", ")}${MEAS.unexpected.length > 2 ? "…" : ""}.` : "";
+  $("#est").innerHTML = MEAS
+    ? `${fromCode} <b class="meas">Measured</b> from ${esc(MEAS.source)}${MEAS.spans ? ` (${fmtN(MEAS.traces)} traces, ${Math.round(MEAS.windowSec / 60)} min${MEAS.sampleRate < 1 ? `, ${Math.round(MEAS.sampleRate * 100)}% sampled` : ""})` : ""}: ${nMeasured} of ${allSteps.length} hop timings${realTraffic ? ", real traffic" : ""}. <b>Estimated:</b> the rest.${unexp}`
+    : `${fromCode} <b>Estimated:</b> hop timings and traffic (${CFG.traffic?.baseRps ?? 8} req/s). Add production traces to replace them.`;
+}
 
 // gauges
 const glist = $("#glist"); const gRows = {};
 [...order, ...queueIds, ...partnersIds].forEach((id) => {
   const d = document.createElement("div"); d.className = "g";
-  d.innerHTML = `<span class="nm"></span><span class="bar"><i></i></span><span class="v"></span>`;
+  d.innerHTML = `<span class="nm"></span><span class="bar"><i style="background:${hex(NCOL[id])}"></i></span><span class="v"></span>`;
   d.querySelector(".nm").textContent = short(id) + (NODES[id].kind === "queue" ? " queue" : "");
   glist.appendChild(d); gRows[id] = d;
   if (id === order[order.length - 1] && queueIds.length) glist.appendChild(Object.assign(document.createElement("div"), { className: "sep" }));
@@ -561,7 +633,9 @@ const glist = $("#glist"); const gRows = {};
 const labelBox = $("#labels"); const labels = {};
 for (const id of Object.keys(objs)) {
   const n = NODES[id]; const d = document.createElement("div");
-  d.className = "lbl k-" + n.kind; d.innerHTML = `<b></b><div class="m"></div>`;
+  d.className = "lbl k-" + n.kind; d.innerHTML = `<span class="dot" style="background:${hex(NCOL[id])}"></span><b></b><div class="m"></div>`;
+  d.onmouseenter = () => { if (mode === "user") UI.hover = id; }; d.onmouseleave = () => { if (UI.hover === id) UI.hover = null; };
+  d.ondblclick = (e) => { e.stopPropagation(); userAction(() => focusOn(id)); };
   d.querySelector("b").textContent = n.kind === "queue" ? n.label : n.label;
   d.onclick = (e) => { e.stopPropagation(); userAction(() => inspect(id)); };
   labelBox.appendChild(d); labels[id] = d;
@@ -583,9 +657,13 @@ function inspect(id) {
     h += `<h3>Background workers</h3>${li(n.workers, (w) => `<li>${esc(w.queue)} · ${w.concurrency ?? "?"} at a time${w.concurrencyEnv ? ` (${esc(w.concurrencyEnv)})` : ""}${evs(w.evidence)}</li>`)}`;
   } else if (n.kind === "queue") {
     const m = lastMetrics.qinfo[id];
-    h += `<h3>Workers</h3><ul><li>${n.concurrency ?? "1 (not found in code)"} jobs at a time${n.concurrencyEnv?.length ? ` · env ${esc(n.concurrencyEnv.join(", "))}` : ""}</li><li>~${Math.round(workMs(id, UI))} ms of work per job (est.)</li><li>drains ${m && isFinite(m.mu) ? fmtN(m.mu) : "–"} jobs/s · receives ${m ? fmtN(m.lam) : "–"}/s</li></ul>`;
+    const mq = MEAS?.queues?.[id];
+    if (mq) h += `<h3>In production <span class="mtag m">measured</span></h3><ul>${mq.waitP50 != null ? `<li>jobs wait ${fmtMs(mq.waitP50).join(" ")} (p50), ${fmtMs(mq.waitP95).join(" ")} (p95) before a worker takes them</li>` : ""}${mq.observedConcurrency ? `<li>up to ${mq.observedConcurrency} ran at once</li>` : ""}</ul>`;
+    h += `<h3>Workers</h3><ul><li>In the code: ${n.concurrency ?? (mq?.observedConcurrency ? `not found; ${mq.observedConcurrency} seen in production` : "1 (not found, assumed)")} at a time${n.concurrencyEnv?.length ? ` · env ${esc(n.concurrencyEnv.join(", "))}` : ""}</li><li id="q-live"></li></ul>`;
     h += `<h3>Defined at</h3><ul><li>${evs(n.evidence)}</li></ul>`;
   } else if (n.kind === "partner") {
+    const mp = measuredPartner(id);
+    if (MEAS) h += mp ? `<h3>In production <span class="mtag m">measured</span></h3><ul><li>p50 ${fmtMs(mp.p50).join(" ")} · p95 ${fmtMs(mp.p95).join(" ")}</li><li>${mp.errorRate ? `${(mp.errorRate * 100).toFixed(2)}% of calls failed` : "no failed calls seen"}</li></ul>` : `<h3>In production</h3><ul><li>Not in the traces <span class="mtag e">est.</span></li></ul>`;
     h += `<h3>Outside your system</h3><ul><li>timeout ${n.timeoutMs ? n.timeoutMs + " ms" + (n.timeoutEnv ? ` (${esc(n.timeoutEnv)})` : "") : "not found in code (15 s assumed)"}</li><li>${n.retries ?? (EST.partnerRetries || {})[id] ?? 3} attempts before giving up${n.retries ? "" : " (assumed)"}</li><li>base URL from ${esc(n.baseUrlEnv || "?")}</li></ul><h3>Client</h3><ul><li>${evs(n.evidence)}</li></ul>`;
   } else if (n.kind === "database") {
     h += `<h3>Tables (${n.models?.length || 0})</h3>${li((n.models || []).slice(0, 40), (m) => `<li>${esc(m)}</li>`)}`;
@@ -593,7 +671,22 @@ function inspect(id) {
     h += `<h3>Events (${n.events?.length || 0})</h3>${li(n.events || [], (e) => `<li>${esc(e)}</li>`)}`;
     if (SYS.unresolved?.eventsWithoutListener?.length) h += `<h3>Announced, nobody listening</h3>${li(SYS.unresolved.eventsWithoutListener, (e) => `<li>${esc(e)}</li>`)}`;
   }
-  body.innerHTML = h;
+  const through = FLOWS.map((f, i) => [f, i]).filter(([f]) => f.steps.some((s) => s.from === id || s.to === id));
+  if (through.length) h += `<h3>Requests that pass through</h3><ul>${through.map(([f, i]) => `<li class="fl"><span>${esc(f.title)}</span><button class="b" data-play="${i}">Follow</button></li>`).join("")}</ul>`;
+  if (n.kind === "queue" && !delayedQueues.has(id)) {
+    const base = n.concurrency || 1;
+    h += `<h3>What if</h3><div class="wi"><div class="row"><label for="wi-c">Workers</label><input id="wi-c" type="range" min="1" max="${Math.max(40, base * 4)}" step="1" value="${concurrencyOf(id)}"><output id="wi-cv">${concurrencyOf(id)}</output></div><div id="wi-cn" class="p"></div><button class="b" id="wi-reset">Back to the code's ${base}</button></div>`;
+  }
+  if (n.kind === "partner") {
+    const ms = Math.round(partnerMs(id, { outage: {} }));
+    h += `<h3>What if</h3><div class="wi"><div class="row"><label for="wi-l">Each call</label><input id="wi-l" type="range" min="1" max="4" step="0.01" value="${Math.log10(ms)}"><output id="wi-lv">${fmtMs(ms).join(" ")}</output></div><div class="btns"><button class="b" id="wi-down">${UI.outage[id] ? "Bring it back" : "Take it down"}</button><button class="b" id="wi-reset">Reset</button></div></div>`;
+  }
+  body.innerHTML = h; bindPlay();
+  const note = () => liveInspector();
+  if ($("#wi-c")) { $("#wi-c").oninput = (e) => userAction(() => { WHATIF.conc[id] = +e.target.value; $("#wi-cv").textContent = e.target.value; note(); }); note(); }
+  if ($("#wi-l")) $("#wi-l").oninput = (e) => userAction(() => { const v = Math.round(Math.pow(10, +e.target.value)); WHATIF.lat[id] = v; $("#wi-lv").textContent = fmtMs(v).join(" "); });
+  if ($("#wi-down")) $("#wi-down").onclick = () => userAction(() => { UI.outage[id] = !UI.outage[id]; inspect(id); const fi = FLOWS.findIndex((f) => f.partners.includes(id)); if (UI.outage[id] && fi >= 0) playFlow(fi, true); });
+  if ($("#wi-reset")) $("#wi-reset").onclick = () => userAction(() => { delete WHATIF.conc[id]; delete WHATIF.lat[id]; inspect(id); });
   $("#insp").style.display = "block"; $("#gauges").style.display = "none";
 }
 function closeInspect() { UI.inspect = null; $("#insp").style.display = "none"; $("#gauges").style.display = "block"; }
@@ -603,10 +696,28 @@ function esc(s) { return String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp
 /* =========================================================================
    STATE — user mode and tour mode both write UI; render reads it.
    ========================================================================= */
-const UI = { load: 1, speed: 1, outage: {}, inspect: null, flow: null, failure: false, flowT: 0, sched: null, explode: 0, view: "Overview", cam: null };
+const UI = { hover: null, hiddenKinds: new Set(), paused: false, follow: false, load: 1, speed: 1, outage: {}, inspect: null, flow: null, failure: false, flowT: 0, sched: null, explode: 0, view: "Overview", cam: null };
 let lastMetrics = null;
-function playFlow(i, failure) { UI.flow = i; UI.failure = !!failure; UI.flowT = 0; UI.sched = schedule(variantSteps(i, failure), UI); buildChips(); }
-function setView(v) { UI.view = v; camGoal = { ...VIEWS[v] }; }
+function playFlow(i, failure) { UI.paused = false; UI.flow = i; UI.failure = !!failure; UI.flowT = 0; UI.sched = schedule(variantSteps(i, failure), UI); buildChips(); }
+function setView(v) { UI.view = v; UI.follow = false; camGoal = { ...VIEWS[v] }; }
+function curIndex() { if (!UI.sched) return -1; let k = -1; UI.sched.items.forEach((it, i) => { if (UI.flowT >= it.start) k = i; }); return k; }
+function seekStep(i) { if (!UI.sched) { if (FLOWS[0]) playFlow(0, false); else return; } const it = UI.sched.items[clamp(i, 0, UI.sched.items.length - 1)]; UI.flowT = it.start + 0.001; }
+function stepBy(d) { if (!UI.sched) { if (FLOWS[0]) playFlow(0, false); return; } UI.paused = true; seekStep(curIndex() + d); }
+function focusOn(id) { const v = fitView([id], UI.cam.th, Math.min(UI.cam.ph, 1.1), 0.55); UI.follow = false; camGoal = v; }
+$("#tl-prev").onclick = () => userAction(() => stepBy(-1));
+$("#tl-next").onclick = () => userAction(() => stepBy(1));
+$("#tl-play").onclick = () => userAction(() => { if (!UI.sched && FLOWS[0]) playFlow(0, false); else if (UI.sched && UI.flowT > UI.sched.total) { UI.flowT = 0; UI.paused = false; } else UI.paused = !UI.paused; });
+$("#tl-ride").onclick = () => userAction(() => { UI.follow = !UI.follow; if (!UI.follow) camGoal = { ...VIEWS.Overview }; else if (!UI.sched && FLOWS[0]) playFlow(0, false); });
+
+// ---------- legend: what each colour means, click to hide a kind
+const legend = $("#legend");
+const kindsPresent = [...new Set(Object.values(edgeObjs).map((e) => e.group))];
+["request", "hand-off", "data", "event", "job", "outside"].filter((k) => kindsPresent.includes(k)).forEach((k) => {
+  const b = document.createElement("button"); b.innerHTML = `<i style="background:${k === "hand-off" ? "linear-gradient(90deg," + order.slice(0, 4).map((id) => hex(NCOL[id])).join(",") + ")" : hex(KC[k])}"></i>${KLABEL[k]}`;
+  b.title = `Show or hide ${KLABEL[k].toLowerCase()}`; b.setAttribute("aria-pressed", "true");
+  b.onclick = () => userAction(() => { UI.hiddenKinds.has(k) ? UI.hiddenKinds.delete(k) : UI.hiddenKinds.add(k); b.classList.toggle("off", UI.hiddenKinds.has(k)); b.setAttribute("aria-pressed", String(!UI.hiddenKinds.has(k))); });
+  legend.appendChild(b);
+});
 
 const loadEl = $("#load"), speedEl = $("#speed");
 loadEl.max = CFG.traffic?.maxMultiplier ?? 20;
@@ -632,15 +743,81 @@ window.addEventListener("keydown", (e) => {
   if (e.key === "h" || e.key === "H") { stage.classList.toggle("hidepanels"); return; }
   const k = +e.key; if (k >= 1 && k <= FLOWS.length) userAction(() => playFlow(k - 1, false));
   if (e.key === "Escape") userAction(closeInspect);
+  if (e.key === "ArrowRight") { e.preventDefault(); userAction(() => stepBy(1)); }
+  if (e.key === "ArrowLeft") { e.preventDefault(); userAction(() => stepBy(-1)); }
+  if (e.key === " " && e.target === document.body) { e.preventDefault(); $("#tl-play").click(); }
+  if (e.key === "f" || e.key === "F") $("#tl-ride").click();
 });
 const ray = new THREE.Raycaster();
 function pick(e) {
   const r = $("#gl").getBoundingClientRect();
   const v = new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
   ray.setFromCamera(v, camera);
-  const hit = ray.intersectObjects(scene.children, true).find((h) => h.object.userData.node);
-  userAction(() => (hit ? inspect(hit.object.userData.node) : closeInspect()));
+  const hit = hitAt(e);
+  userAction(() => (hit?.node ? inspect(hit.node) : hit?.edge ? inspectEdge(hit.edge) : closeInspect()));
 }
+function hitAt(e) {
+  const r = $("#gl").getBoundingClientRect();
+  ray.setFromCamera(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1), camera);
+  const hits = ray.intersectObjects(scene.children, true);
+  const n = hits.find((h) => h.object.userData.node);
+  const ed = hits.find((h) => h.object.userData.edge && !UI.hiddenKinds.has(edgeObjs[h.object.userData.edge]?.group));
+  if (n && (!ed || n.distance <= ed.distance + 0.5)) return { node: n.object.userData.node };
+  if (ed) return { edge: ed.object.userData.edge };
+  return null;
+}
+const tip = $("#tip");
+let hoverQueued = null;
+$("#gl").addEventListener("pointermove", (e) => { if (drag && drag.moved > 3) return; hoverQueued = e; });
+$("#gl").addEventListener("pointerleave", () => { hoverQueued = null; UI.hover = null; tip.style.display = "none"; });
+$("#gl").addEventListener("dblclick", (e) => { const h = hitAt(e); if (h?.node) userAction(() => focusOn(h.node)); });
+function updateHover() {
+  if (!hoverQueued || mode !== "user") { if (mode !== "user") { UI.hover = null; tip.style.display = "none"; } return; }
+  const e = hoverQueued; hoverQueued = null;
+  const h = hitAt(e); UI.hover = h?.node || h?.edge || null;
+  $("#gl").style.cursor = UI.hover ? "pointer" : "grab";
+  if (!UI.hover) { tip.style.display = "none"; return; }
+  const sr = stage.getBoundingClientRect(), k = sr.width / W;
+  tipFor = h; tip.innerHTML = h.node ? tipNode(h.node) : tipEdge(h.edge);
+  tip.style.display = "block"; tip.style.left = Math.min(W - 300, (e.clientX - sr.left) / k + 14) + "px"; tip.style.top = ((e.clientY - sr.top) / k + 14) + "px";
+}
+function tipNode(id) {
+  const n = NODES[id], m = lastMetrics; const kindName = { service: "service", app: "app", external: "caller", database: "database", bus: "event bus", queue: "job queue", partner: "outside service" }[n.kind];
+  let line = "";
+  if (n.kind === "service") line = `${Math.round((m.util[id] || 0) * 100)}% busy · ${(n.routes || []).length} endpoints`;
+  else if (n.kind === "queue") { const q = m.qinfo[id]; line = q.delayed ? `${fmtN(q.depth)} scheduled` : `${fmtN(q.depth)} waiting · drains ${fmtN(q.mu)}/s · ${concurrencyOf(id)} at a time`; }
+  else if (n.kind === "partner") line = UI.outage[id] ? "not answering" : `${fmtN(m.R.partnerCalls[id] || 0)} calls/s · ~${fmtMs(partnerMs(id, UI)).join(" ")} each`;
+  return `<b>${esc(n.label)}</b> <span class="k">${kindName}</span><br>${line}<div class="h">Click to open · double-click to zoom</div>`;
+}
+function tipEdge(key) {
+  const e = edgeObjs[key]; const se = SYS.edges.find((x) => x.from === e.from && x.to === e.to);
+  const labels = (se?.labels || FLOWS.flatMap((f) => [...f.steps, ...f.failureSteps]).filter((s) => s.from + ">" + s.to === key).map((s) => s.label)).slice(0, 3);
+  const mh = MEAS?.hops?.[key];
+  const real = mh ? `<br>measured: p50 ${fmtMs(mh.p50).join(" ")} · p95 ${fmtMs(mh.p95).join(" ")}${mh.rps != null ? ` · ${fmtN(mh.rps)}/s` : ""}${mh.errorRate ? ` · ${(mh.errorRate * 100).toFixed(1)}% errors` : ""}` : MEAS ? "<br>not in the traces (estimated)" : "";
+  return `<b>${esc(short(e.from))} → ${esc(short(e.to))}</b> <span class="k">${KLABEL[e.group]?.toLowerCase() || e.kind}</span><br>${labels.map(esc).join("<br>")}${real}<br>${fmtN(lastMetrics.R.edge[key] || 0)}/s in the model now<div class="h">Click for the code behind it</div>`;
+}
+function inspectEdge(key) {
+  const e = edgeObjs[key]; UI.inspect = null; UI.explode = 0;
+  const steps = FLOWS.flatMap((f) => [...f.steps, ...f.failureSteps].map((s) => ({ s, f }))).filter(({ s }) => s.from + ">" + s.to === key);
+  const uniq = []; for (const x of steps) if (!uniq.some((u) => u.s.label === x.s.label && u.s.evidence?.line === x.s.evidence?.line)) uniq.push(x);
+  let h = `<h2><span class="dot" style="background:${hex(e.color)}"></span>${esc(short(e.from))} → ${esc(short(e.to))}</h2><div class="p">${esc(KLABEL[e.group] || e.kind)} · ${fmtN(lastMetrics.R.edge[key] || 0)}/s now</div>`;
+  const mh = MEAS?.hops?.[key];
+  if (MEAS) h += mh ? `<h3>In production <span class="mtag m">measured</span></h3><ul><li>p50 ${fmtMs(mh.p50).join(" ")} · p95 ${fmtMs(mh.p95).join(" ")}${WRAPS.has(e.kind) ? " — includes everything that happens inside it" : ""}</li>${mh.rps != null ? `<li>${fmtN(mh.rps)} calls/s${mh.count ? ` (${fmtN(mh.count)} seen)` : ""}</li>` : ""}<li>${mh.errorRate ? `${(mh.errorRate * 100).toFixed(2)}% failed` : "no errors seen"}</li></ul>` : `<h3>In production</h3><ul><li>Not seen in the traces, so its timing is estimated <span class="mtag e">est.</span></li></ul>`;
+  h += `<h3>What travels here</h3><ul>${uniq.map(({ s, f }) => `<li>${esc(s.label)}${MEAS ? (measuredFor(s)?.perLabel ? ` <span class="mtag m">p50 ${fmtMs(measuredFor(s).p50).join(" ")}</span>` : "") : ""}${s.branch === "failure" ? " (only when something fails)" : ""}<br><code>${esc(s.evidence?.file || "")}:${s.evidence?.line ?? ""}</code>${s.evidence?.code ? `<br><code>${esc(s.evidence.code)}</code>` : ""}</li>`).join("")}</ul>`;
+  const fl = [...new Set(uniq.map((x) => FLOWS.indexOf(x.f)))];
+  h += `<h3>Requests that use it</h3><ul>${fl.map((i) => `<li class="fl"><span>${esc(FLOWS[i].title)}</span><button class="b" data-play="${i}">Follow</button></li>`).join("")}</ul>`;
+  $("#inspbody").innerHTML = h; bindPlay();
+  $("#insp").style.display = "block"; $("#gauges").style.display = "none";
+}
+// numbers in an open inspector and tooltip follow the model every frame
+function liveInspector() {
+  const id = UI.inspect; if (!id || !lastMetrics) return;
+  const q = lastMetrics.qinfo?.[id], el = $("#q-live");
+  if (el && q) el.textContent = q.delayed ? `${fmtN(q.depth)} scheduled` : `Now: ${concurrencyOf(id)} at a time × ~${Math.round(workMs(id, UI))} ms each (est.) → drains ${fmtN(q.mu)}/s, receives ${fmtN(q.lam)}/s, ${fmtN(q.depth)} waiting`;
+  const cn = $("#wi-cn"); if (cn && q) cn.textContent = q.lam > q.mu ? `Falling behind by ${fmtN(q.lam - q.mu)} jobs every second.` : `Keeping up with ${fmtN(q.mu - q.lam)}/s to spare.`;
+}
+let tipFor = null;
+function bindPlay() { document.querySelectorAll("#inspbody [data-play]").forEach((b) => (b.onclick = () => userAction(() => { closeInspect(); playFlow(+b.dataset.play, false); }))); }
 
 /* =========================================================================
    TOUR — deterministic script; a cursor drives the same buttons a visitor would.
@@ -784,7 +961,9 @@ const C_DOT = new THREE.Color(0x56616d), C_ACC = new THREE.Color(COL.accent), C_
 function buildChips() {
   const box = $("#chips"); box.innerHTML = "";
   if (!UI.sched) return;
-  UI.sched.items.forEach((it) => { const d = document.createElement("span"); d.className = "chip" + (it.s.branch === "failure" || it.s.failed ? " fail" : ""); d.textContent = chipText(it.s); box.appendChild(d); });
+  UI.sched.items.forEach((it, idx) => { const d = document.createElement("span"); d.className = "chip" + (it.s.branch === "failure" || it.s.failed ? " fail" : "");
+    d.style.borderLeftColor = hex(kindColor(it.s.kind, it.s.from)); d.title = `${idx + 1}. ${sentence(it.s).join(" · ")}`;
+    d.onclick = () => userAction(() => seekStep(idx)); d.textContent = chipText(it.s); box.appendChild(d); });
 }
 const KIND = { call: "calls", http: "request", "db-read": "read", "db-write": "write", emit: "announce", deliver: "hears", enqueue: "queue", consume: "worker picks up", partner: "calls" };
 function chipText(s) { if (s.kind === "call") return short(s.to); return s.kind === "db-read" || s.kind === "db-write" ? s.label.split(".")[0] : s.kind === "http" ? short(s.to) : s.kind === "deliver" ? short(s.to) : s.kind === "partner" ? short(s.to) : s.kind === "consume" ? short(s.to) + " worker" : s.label; }
@@ -812,15 +991,21 @@ function frame(nowS, dt) {
     applyTour(t); S = tourSimAt(((t % TOUR_LEN) + TOUR_LEN) % TOUR_LEN);
   } else {
     simStep(userSim, UI, Math.min(dt, 0.1)); S = userSim;
-    if (UI.sched) UI.flowT += dt * UI.speed;
-    if (nowS - idleAt > 25) { mode = "tour"; tourStart = nowS; tourSim = newSim(); tourSimT = 0; }
+    if (UI.sched && !UI.paused) UI.flowT += dt * UI.speed;
+    if (nowS - idleAt > 25) { mode = "tour"; tourStart = nowS; tourSim = newSim(); tourSimT = 0; WHATIF.conc = {}; WHATIF.lat = {}; UI.hiddenKinds.clear(); legend.querySelectorAll("button").forEach((b) => b.classList.remove("off")); UI.paused = false; UI.follow = false; UI.hover = null; }
+    if (UI.follow && packet.visible) { camGoal.tx = packet.position.x; camGoal.ty = packet.position.y * 0.6; camGoal.tz = packet.position.z; camGoal.r = Math.min(camGoal.r, VIEWS.Overview.r * 0.38); }
     for (const k of ["th", "ph", "r", "tx", "ty", "tz"]) UI.cam[k] = lerp(UI.cam[k], camGoal[k], 1 - Math.exp(-dt * 5));
     UI.explode = lerp(UI.explode, UI.inspect && NODES[UI.inspect].kind === "service" ? 1 : 0, 1 - Math.exp(-dt * 5));
   }
+  updateHover();
+  if (mode === "user" && UI.hover && tipFor && tip.style.display === "block" && ((frameNo = (frameNo + 1) % 3) === 0)) tip.innerHTML = tipFor.node ? tipNode(tipFor.node) : tipEdge(tipFor.edge);
+  if (UI.inspect && (frameNo % 3) === 0) liveInspector();
   const fi = UI.flow ?? 0;
   const M = (lastMetrics = metrics(S, UI, fi));
+  $("#tl-play").textContent = UI.paused || !UI.sched || UI.flowT > UI.sched.total ? "▶" : "❚❚";
+  $("#tl-ride").classList.toggle("on", !!UI.follow);
   applyCam(UI.cam);
-  $("#mode").textContent = mode === "user" ? "You're driving · drag to orbit · scroll to zoom · H hides panels" : mode === "tour" ? "Tour · click anything to take over" : "";
+  $("#mode").textContent = mode === "user" ? "You're driving · hover anything · click pipes and blocks · ← → steps · F rides along · H hides panels" : mode === "tour" ? "Tour · click anything to take over" : "";
   $("#mode").style.display = mode === "record" ? "none" : "";
 
   // ----- current step
@@ -837,7 +1022,8 @@ function frame(nowS, dt) {
   // ----- nodes
   const focus = UI.inspect && UI.explode > 0.02 ? UI.inspect : null;
   for (const [id, o] of Object.entries(objs)) {
-    const dim = focus && id !== focus ? 1 - 0.85 * UI.explode : 1;
+    let dim = focus && id !== focus ? 1 - 0.85 * UI.explode : 1;
+    if (UI.hover && !focus && mode === "user") { const near = id === UI.hover || Object.values(edgeObjs).some((e) => (e.from === UI.hover && e.to === id) || (e.to === UI.hover && e.from === id) || (e.key === UI.hover && (e.from === id || e.to === id))); if (!near) dim = 0.3; }
     for (const m of o.mats) { if (m.userData.baseOp == null) m.userData.baseOp = m.opacity; m.opacity = m.userData.baseOp * dim; m.depthWrite = dim > 0.9 && m.userData.baseOp > 0.5; }
     const k = NODES[id].kind;
     if (k === "service") {
@@ -846,16 +1032,17 @@ function frame(nowS, dt) {
       o.floors.forEach((f, i) => { f.position.y = f.userData.baseY + ex * i * 0.9; });
       o.cap.position.y = o.floors.at(-1).position.y + o.fh / 2 + 0.06 + ex * 0.9;
       o.anchorY = o.cap.position.y + 0.3;
-      o.cap.material.emissive.setHex(u > 1 ? 0x5a0d10 : activeNodes.has(id) ? 0x4a3000 : u > 0.7 ? 0x3a2600 : 0x000000);
-      o.cap.material.color.setHex(u > 1 ? COL.bad : activeNodes.has(id) ? COL.accent : COL.metal);
+      tmpC.setHex(NCOL[id]).multiplyScalar(activeNodes.has(id) || UI.hover === id ? 0.45 : 0);
+      o.cap.material.emissive.copy(u > 1 ? tmpC.setHex(0x5a0d10) : tmpC);
+      o.cap.material.color.setHex(u > 1 ? COL.bad : NCOL[id]);
     } else if (k === "queue") {
       const q = M.qinfo[id]; const cap = q.delayed ? Math.max(50, q.lam * 1200) : Math.max(40, q.mu * 20);
       const h = clamp(Math.log10(1 + q.depth) / Math.log10(1 + cap), 0.002, 1) * 2.5;
       o.liquid.scale.y = h; o.liquid.position.y = 0.25 + h / 2;
-      o.liquid.material.color.setHex(q.util > 1 ? COL.bad : q.util > 0.75 ? COL.accent : COL.liquid);
+      o.liquid.material.color.setHex(q.util > 1 ? COL.bad : q.util > 0.75 ? 0xf59f00 : COL.liquid);
     } else if (k === "partner") {
       const down = !!UI.outage[id];
-      o.top.material.color.setHex(down ? COL.bad : activeNodes.has(id) ? COL.accent : COL.graphite);
+      o.top.material.color.setHex(down ? COL.bad : KC.outside); o.top.material.emissive.setHex(activeNodes.has(id) && !down ? 0x4a2a00 : 0x000000);
       o.body.material.color.setHex(down ? 0xf6d9da : COL.light);
     } else if (k === "database") {
       // database stays neutral; its label carries the numbers
@@ -866,14 +1053,20 @@ function frame(nowS, dt) {
     const on = activeEdges.has(e.key);
     const rate = M.R.edge[e.key] || 0;
     const failOn = rate > 0 && e.to === "bus:events" ? false : false;
-    e.mesh.material.color.setHex(on ? COL.accent : COL.edge);
-    e.mesh.material.opacity = (focus ? (e.from === focus || e.to === focus ? 0.7 : 0.1) : rate > 0 ? 0.6 : 0.22) + (on ? 0.35 : 0);
+    const hidden = UI.hiddenKinds.has(e.group);
+    const touchesHover = UI.hover && (e.from === UI.hover || e.to === UI.hover || e.key === UI.hover);
+    e.mesh.visible = !hidden;
+    e.mesh.material.color.setHex(e.color);
+    tmpC.setHex(e.color).multiplyScalar(on || touchesHover ? 0.5 : 0); e.mesh.material.emissive.copy(tmpC);
+    let op = focus ? (e.from === focus || e.to === focus ? 0.8 : 0.08) : rate > 0 ? 0.62 : 0.25;
+    if (UI.hover && !focus) op = touchesHover ? 0.95 : 0.12;
+    e.mesh.material.opacity = Math.min(1, op + (on ? 0.4 : 0));
   }
   // ----- ambient traffic dots (pure function of time)
   const T = mode === "user" ? userSim.t : S.t;
   let n = 0;
   for (const e of Object.values(edgeObjs)) {
-    const rate = M.R.edge[e.key] || 0; if (rate <= 0) continue;
+    const rate = M.R.edge[e.key] || 0; if (rate <= 0 || UI.hiddenKinds.has(e.group)) continue;
     const kcount = clamp(Math.ceil(Math.sqrt(rate) * 1.1), 1, 14);
     const isFail = FLOWS.some((f) => f.failureSteps.some((s) => s.from + ">" + s.to === e.key)) && !FLOWS.some((f) => f.steps.some((s) => s.from + ">" + s.to === e.key));
     const blocked = e.kind === "partner" && UI.outage[e.to];
@@ -883,7 +1076,7 @@ function frame(nowS, dt) {
       e.curve.getPointAt(u, tmpV);
       const sc = focus && !(e.from === focus || e.to === focus) ? 0.001 : 1;
       tmpM.makeScale(sc, sc, sc).setPosition(tmpV); dots.setMatrixAt(n, tmpM);
-      dots.setColorAt(n, isFail || blocked ? C_BAD : C_DOT); n++;
+      dots.setColorAt(n, isFail || blocked ? C_BAD : tmpC.setHex(e.color)); n++;
     }
   }
   dots.count = n; dots.instanceMatrix.needsUpdate = true; if (dots.instanceColor) dots.instanceColor.needsUpdate = true;
@@ -894,9 +1087,10 @@ function frame(nowS, dt) {
     const bad = cur.s.failed || cur.s.branch === "failure";
     const ku = cur.s.failed ? Math.min(curK, 0.5 + 0.03 * Math.sin(T * 30)) : ease(curK);
     cur.curve.getPointAt(clamp(ku, 0, 1), packet.position); halo.position.copy(packet.position);
-    packet.material.color.setHex(bad ? COL.bad : COL.accent); halo.material.color.setHex(bad ? COL.bad : COL.accent);
+    const pc = bad ? COL.bad : kindColor(cur.s.kind, cur.s.from);
+    packet.material.color.setHex(pc); halo.material.color.setHex(pc);
     halo.scale.setScalar(1 + 0.18 * Math.sin(T * 9));
-    trail.forEach((t, i) => { cur.curve.getPointAt(clamp(ku - (i + 1) * 0.022, 0, 1), t.position); t.material.color.setHex(bad ? COL.bad : COL.accent); });
+    trail.forEach((t, i) => { cur.curve.getPointAt(clamp(ku - (i + 1) * 0.022, 0, 1), t.position); t.material.color.setHex(pc); });
   }
   renderer.render(scene, camera);
 
@@ -965,7 +1159,9 @@ function frame(nowS, dt) {
       const ms = hopMs(cur.s, UI);
       tagEl.style.display = ""; tagEl.className = "tag" + (cur.s.failed || cur.s.branch === "failure" ? " bad" : "");
       tagEl.style.left = p.x + "px"; tagEl.style.top = p.y - 10 + "px";
-      tagEl.innerHTML = `${esc(cur.s.label)} <em>${fmtMs(ms).join(" ")}${cur.s.kind === "partner" && UI.outage[cur.s.to] ? " (timeouts)" : ""}</em>`;
+      const mm = measuredFor(cur.s), down = cur.s.kind === "partner" && UI.outage[cur.s.to];
+      const wrap = WRAPS.has(cur.s.kind) && mm;
+      tagEl.innerHTML = wrap ? `${esc(cur.s.label)} <em>${fmtMs(mm.p50).join(" ")}</em><span class="src">measured, includes the steps inside</span>` : `${esc(cur.s.label)} <em>${fmtMs(ms).join(" ")}${down ? " (timeouts)" : ""}</em><span class="src">${down ? "" : mm ? "measured p50" : "est."}</span>`;
     } else tagEl.style.display = "none";
   } else {
     tagEl.style.display = "none";
@@ -979,10 +1175,12 @@ function frame(nowS, dt) {
   // ----- head panel
   const [bv, bu] = fmtMs(M.e2e);
   $("#big").innerHTML = `${bv}<small>${bu}</small>`;
-  $("#bigcap").textContent = `${FLOWS[fi]?.title || ""}, end to end (est.)`;
+  { const st = (FLOWS[fi]?.steps || []).filter((s) => !(s.kind === "http" && NODES[s.from]?.kind === "external")); const k = st.filter((s) => measuredFor(s)).length;
+    $("#bigcap").innerHTML = `<span class="mtag ${MEAS && k ? "m" : "e"}" style="margin:0 5px 0 0">${!MEAS || !k ? "est." : k === st.length ? "measured" : `measured ${k}/${st.length}`}</span>${esc(FLOWS[fi]?.title || "")}, end to end`;
+    $("#bigcap").title = MEAS ? `${k} of ${st.length} hops in this request are timed from production; the rest are estimates` : "All timings are estimates"; }
   $("#k-rps").textContent = fmtN(M.R.base);
   $("#k-backlog").textContent = fmtN(M.backlog); $("#k-bl").classList.toggle("bad", M.backlog > 50);
-  $("#k-fail").textContent = fmtN(M.failing); $("#k-fl").classList.toggle("bad", M.failing > 0);
+  $("#k-fail").textContent = M.failing < 0.005 ? "0" : M.failing < 1 ? M.failing.toFixed(2) : fmtN(M.failing); $("#k-fl").classList.toggle("bad", M.failing >= 0.05);
   $("#loadv").textContent = (+UI.load).toFixed(UI.load < 10 ? 1 : 0) + "×";
 
   // ----- gauges
@@ -1015,19 +1213,25 @@ function drawChart(cv, vals, color, log) {
 /* =========================================================================
    LOOP + recording hooks
    ========================================================================= */
+let frameNo = 0;
 let REC_T = 0, last = performance.now() / 1000;
-function fit() { const k = Math.min(innerWidth / W, innerHeight / H); stage.style.transform = `scale(${k})`; }
+function fit() { const fw = $("#fit").clientWidth || innerWidth, fh = $("#fit").clientHeight || innerHeight; const k = Math.min(fw / W, fh / H); stage.style.transform = `translate(${Math.max(0, (fw - W * k) / 2)}px, ${Math.max(0, (fh - H * k) / 2)}px) scale(${k})`; }
 addEventListener("resize", fit); fit();
 // warm every shader before the first visible frame
 renderer.compile(scene, camera);
 function loop() {
   const now = performance.now() / 1000; const dt = Math.min(0.1, now - last); last = now;
-  if (mode !== "record") frame(now, dt);
-  requestAnimationFrame(loop);
+  try { if (mode !== "record") frame(now, dt); }
+  catch (err) { (window.__xrayErrors ||= []).push(String(err && err.stack || err)); if (window.__xrayErrors.length < 4) console.error(err); }
+  finally { requestAnimationFrame(loop); }
 }
 window.__xray = {
   duration: TOUR_LEN, beats: BEATS.map(({ kind, t0, dur }) => ({ kind, t0, dur })),
   renderAt(t) { mode = "record"; REC_T = t; frame(t, 1 / 60); return true; },
+  // where a node or pipe is on screen (stage pixels) — for automated interaction tests
+  screenOf(id) { const v = edgeObjs[id] ? edgeObjs[id].curve.getPointAt(0.5) : pos[id].clone().add(new THREE.Vector3(0, (objs[id]?.anchorY || 2) * 0.5, 0)); v.project(camera); return { x: (v.x * 0.5 + 0.5) * W, y: (-v.y * 0.5 + 0.5) * H }; },
+  edges() { return Object.keys(edgeObjs); },
+  state() { return { mode, flowT: UI.flowT, paused: UI.paused, idx: curIndex(), starts: UI.sched?.items.map((i) => +i.start.toFixed(3)) }; },
   hiddenImportant() { return Object.entries(labels).filter(([, d]) => d.style.visibility === "hidden" && (d.classList.contains("over") || d.classList.contains("hot"))).map(([id]) => id); },
   labelRects() { return Object.entries(labels).filter(([, d]) => d.style.display !== "none" && d.style.visibility !== "hidden" && !d.classList.contains("dim")).map(([id, d]) => { const r = d.getBoundingClientRect(); return { id, x: r.left, y: r.top, w: r.width, h: r.height }; }); },
   ready: true,

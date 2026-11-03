@@ -61,6 +61,17 @@ The first run writes a starter `xray-out/xray.config.json` and builds. Edit it (
 
 Rebuild after every edit.
 
+### 3b. Real numbers (strongly recommended)
+
+Estimates make a convincing picture; production numbers make it true. Ask the person once where their monitoring lives, then follow `references/real-data.md`:
+
+```bash
+node $X/measure.mjs xray-out --traces <export.json> [--sample-rate 0.1]   # OTLP, Jaeger or Zipkin JSON
+node $X/measure.mjs xray-out --metrics metrics.json                       # numbers read off any dashboard
+node $X/build.mjs xray-out
+```
+Report what it says, especially **calls seen in production but not in the code map** — a missed dependency or a surprise either way. Ask about trace sampling; without `--sample-rate` traffic reads low. Never commit the raw trace export.
+
 ### 4. Check it like a critic
 
 ```bash
@@ -80,7 +91,7 @@ Fix with numbers in the config or a scanner fix — never by hiding a problem wi
 - `xray-out/xray.html` — one offline file (~700 KB). Open it in a browser.
 - Video: `node $X/record.mjs xray-out` → `xray-out/xray.mp4` (1920×1080, 30 fps, H.264). Frames are rendered one by one, not screen-recorded, so nothing drops. `--fps 60`, `--seconds 30` to trim for social posts.
 
-Tell the person how to drive it: click a request on the left to follow it, click any block to open it, drag Traffic, take an outside service down, H hides the panels, 1–9 replays flows, 25 s idle restarts the tour.
+Tell the person how to drive it: click a request on the left to follow it (← → step, space pauses, F rides along with the camera); hover anything to light up its connections; click a block or a pipe to open it, with the code behind each call; drag Traffic, or open a queue or outside service and change its workers or response time ("what if"); take an outside service down; the legend hides kinds of traffic; H hides the panels; 25 s idle restarts the tour and resets what-ifs.
 
 ## How the numbers work (so you can explain them)
 
@@ -88,6 +99,7 @@ Tell the person how to drive it: click a request on the left to follow it, click
 - **Delayed jobs** (`delay:`, Celery `countdown`) show a steady "scheduled" count by Little's law: rate × delay.
 - **Outside service down**: each call takes timeout × retries (read from code when present, otherwise 15 s × 3, labelled assumed). Failures per second can't exceed the rate of the queue in front of the call.
 - **End to end** = sum of hops + queue wait (depth ÷ drain rate) + a penalty on busy units; stops at a delayed job.
+- **With measured.json**: leaf hops use their production p50, traffic at 1× is real, queue wait and error rates are real. Wrapping hops (requests into another service, hand-offs, jobs) don't add their own time, to avoid counting the work inside them twice. The page labels every figure "measured" or "est.".
 
 ## Privacy
 

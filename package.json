@@ -1,6 +1,6 @@
 {
   "name": "xray-skill",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "description": "Turn any codebase into a live 3D system you can watch run \u2014 a Claude Code skill.",
   "scripts": {
     "test": "node --test test/*.test.mjs",
@@ -8,7 +8,8 @@
     "build": "node scripts/build.mjs",
     "check": "node scripts/check.mjs",
     "record": "node scripts/record.mjs",
-    "demo": "node scripts/scan.mjs examples/nest-shop --out examples/nest-shop/xray-out/system.json && node scripts/build.mjs examples/nest-shop/xray-out"
+    "demo": "node scripts/scan.mjs examples/nest-shop --out examples/nest-shop/xray-out/system.json && node scripts/build.mjs examples/nest-shop/xray-out",
+    "measure": "node scripts/measure.mjs"
   },
   "license": "MIT",
   "dependencies": {
