@@ -1,0 +1,1038 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>__XRAY_TITLE__ · xray</title>
+<style>
+:root{
+  --studio:#E3E8ED; --studio-deep:#CDD5DD; --ink:#18202A; --muted:#5A6573; --line:#C3CCD5;
+  --panel:rgba(248,250,252,.88); --accent:#F2A100; --accent-ink:#8A5A00; --bad:#E0464C; --ok:#2E8B6E; --liquid:#2F78B5;
+  color-scheme: light;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#AEB8C2;overflow:hidden;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink)}
+#fit{position:fixed;inset:0;display:grid;place-items:center}
+#stage{position:relative;width:1600px;height:900px;transform-origin:center;background:radial-gradient(120% 90% at 50% 35%,var(--studio) 0%,var(--studio-deep) 100%);overflow:hidden}
+#gl{position:absolute;inset:0;width:1600px;height:900px;display:block}
+#labels,#overlay{position:absolute;inset:0;pointer-events:none}
+.lbl{position:absolute;transform:translate(-50%,-100%);white-space:nowrap;font-size:12px;line-height:1.25;text-align:center;padding:3px 7px;border-radius:4px;background:rgba(248,250,252,.82);border:1px solid var(--line);pointer-events:auto;cursor:pointer;transition:opacity .25s}
+.lbl b{font-weight:650;font-size:12.5px}
+.lbl .m{color:var(--muted);font-variant-numeric:tabular-nums;font-size:11px}
+.lbl.hot{border-color:var(--accent);box-shadow:0 0 0 2px rgba(242,161,0,.25)}
+.lbl.over{border-color:var(--bad);color:var(--bad)}
+.lbl.over .m{color:var(--bad)}
+.lbl.dim{opacity:.18}
+.lbl.k-queue,.lbl.k-partner,.lbl.k-database,.lbl.k-bus{background:rgba(248,250,252,.66)}
+.tag{position:absolute;transform:translate(-50%,-130%);font-size:12px;padding:4px 8px;border-radius:4px;background:var(--ink);color:#fff;white-space:nowrap;font-variant-numeric:tabular-nums}
+.tag.bad{background:var(--bad)}
+.tag em{font-style:normal;color:#FFD480}
+
+.panel{position:absolute;background:var(--panel);border:1px solid var(--line);border-radius:7px;backdrop-filter:blur(6px)}
+#head{left:20px;top:18px;width:330px;padding:16px 18px 14px}
+#head h1{margin:0;font-size:22px;font-weight:700;letter-spacing:-.01em}
+#head .sub{margin:4px 0 12px;color:var(--muted);font-size:12.5px;line-height:1.4}
+#big{font-size:54px;font-weight:700;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+#big small{font-size:22px;font-weight:600;margin-left:3px;color:var(--muted)}
+#bigcap{font-size:12px;color:var(--muted);margin-top:4px}
+#kpis{display:flex;gap:18px;margin-top:12px;font-size:12px;color:var(--muted)}
+#kpis span b{display:block;font-size:17px;color:var(--ink);font-variant-numeric:tabular-nums}
+#kpis .bad b{color:var(--bad)}
+
+#flows{left:20px;top:262px;width:330px;padding:12px}
+.ph{font-size:12px;font-weight:650;color:var(--muted);margin:0 2px 8px}
+.flow{display:block;width:100%;text-align:left;border:1px solid transparent;background:transparent;border-radius:5px;padding:8px 10px;margin:0 0 4px;font:inherit;cursor:pointer;color:var(--ink)}
+.flow:hover{background:rgba(0,0,0,.035)}
+.flow.on{border-color:var(--accent);background:rgba(242,161,0,.09)}
+.flow .t{font-size:13.5px;font-weight:620}
+.flow .c{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.35}
+.flow .n{float:right;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+#ctl{left:20px;bottom:150px;width:330px;padding:12px 14px}
+.row{display:flex;align-items:center;gap:10px;margin:6px 0;font-size:12.5px}
+.row label{width:76px;color:var(--muted)}
+.row output{width:44px;text-align:right;font-variant-numeric:tabular-nums;font-weight:650}
+input[type=range]{flex:1;accent-color:var(--ink)}
+.btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+button.b{font:inherit;font-size:12px;padding:5px 9px;border-radius:5px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+button.b:hover{border-color:var(--ink)}
+button.b.down{background:var(--bad);border-color:var(--bad);color:#fff}
+button.b.on{background:var(--ink);border-color:var(--ink);color:#fff}
+
+#gauges{right:20px;top:18px;width:300px;padding:12px 14px;max-height:600px;overflow:hidden}
+.g{display:grid;grid-template-columns:96px 1fr 58px;align-items:center;gap:8px;font-size:12px;margin:5px 0}
+.g .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.g .bar{height:7px;border-radius:4px;background:rgba(0,0,0,.08);overflow:hidden}
+.g .bar i{display:block;height:100%;background:var(--ink);border-radius:4px}
+.g .v{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+.g.warn .bar i{background:var(--accent)}
+.g.over .bar i{background:var(--bad)} .g.over .v{color:var(--bad);font-weight:650}
+.sep{height:1px;background:var(--line);margin:9px 0}
+canvas.ch{width:272px;height:62px;display:block;margin-top:4px}
+.chl{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:8px}
+.chl b{color:var(--ink);font-variant-numeric:tabular-nums}
+
+#insp{right:20px;top:18px;width:300px;padding:14px 16px;display:none;max-height:610px;overflow:auto}
+#insp h2{margin:0 0 2px;font-size:19px}
+#insp .p{font-size:12px;color:var(--muted);margin-bottom:10px;word-break:break-all}
+#insp h3{font-size:12px;color:var(--muted);font-weight:650;margin:12px 0 4px}
+#insp ul{list-style:none;margin:0;padding:0;font-size:12px}
+#insp li{padding:3px 0;border-bottom:1px solid rgba(0,0,0,.05)}
+#insp li code,.ev code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:var(--muted)}
+#insp .x{position:absolute;right:10px;top:8px}
+
+#steps{left:370px;right:340px;bottom:18px;padding:10px 14px;min-height:112px}
+#chips{display:flex;gap:4px;overflow:hidden;white-space:nowrap;margin-bottom:8px}
+.chip{flex:0 0 auto;font-size:11px;padding:3px 7px;border-radius:4px;background:rgba(0,0,0,.05);color:var(--muted)}
+.chip.done{color:var(--ink)}
+.chip.now{background:var(--accent);color:#1d1400;font-weight:650}
+.chip.fail{background:rgba(224,70,76,.12);color:var(--bad)}
+.chip.fail.now{background:var(--bad);color:#fff}
+#stepnow{font-size:15px;font-weight:640;min-height:20px}
+#stepnow .k{font-weight:500;color:var(--muted);margin-right:6px}
+.ev{margin-top:4px;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev code.f{color:var(--ink);margin-right:8px}
+#est{position:absolute;right:20px;bottom:18px;width:300px;padding:10px 14px;font-size:11.5px;color:var(--muted);line-height:1.4}
+#est b{color:var(--ink)}
+
+#cursor{position:absolute;left:0;top:0;width:22px;height:22px;pointer-events:none;z-index:20;opacity:0;transition:opacity .3s}
+#cursor svg{filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.35))}
+#ripple{position:absolute;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;border:2px solid var(--accent);pointer-events:none;opacity:0;z-index:19}
+#mode{position:absolute;left:50%;top:16px;transform:translateX(-50%);font-size:11.5px;color:var(--muted);background:rgba(248,250,252,.7);padding:3px 9px;border-radius:10px;border:1px solid var(--line)}
+.hidepanels .panel,.hidepanels #mode{display:none!important}
+</style>
+</head>
+<body>
+<div id="fit"><div id="stage">
+  <canvas id="gl" width="1600" height="900"></canvas>
+  <div id="labels"></div>
+  <div id="overlay"></div>
+
+  <div id="head" class="panel">
+    <h1 id="title"></h1>
+    <div class="sub" id="subtitle"></div>
+    <div id="big">–</div>
+    <div id="bigcap"></div>
+    <div id="kpis">
+      <span><b id="k-rps">–</b>requests/s</span>
+      <span id="k-bl"><b id="k-backlog">–</b>jobs waiting</span>
+      <span id="k-fl"><b id="k-fail">0</b>failing/s</span>
+    </div>
+  </div>
+
+  <div id="flows" class="panel"><div class="ph">Follow a request</div><div id="flowlist"></div></div>
+
+  <div id="ctl" class="panel">
+    <div class="ph">Push it</div>
+    <div class="row"><label for="load">Traffic</label><input id="load" type="range" min="1" max="20" step="0.1" value="1"><output id="loadv">1×</output></div>
+    <div class="row"><label for="speed">Replay speed</label><input id="speed" type="range" min="0.25" max="2" step="0.05" value="1"><output id="speedv">1×</output></div>
+    <div class="btns" id="outages"></div>
+    <div class="btns" id="views"></div>
+  </div>
+
+  <div id="gauges" class="panel">
+    <div class="ph">Live load</div>
+    <div id="glist"></div>
+    <div class="chl"><span id="c1l">Backlog</span><b id="c1v">0</b></div><canvas class="ch" id="c1" width="544" height="124"></canvas>
+    <div class="chl"><span id="c2l">End to end</span><b id="c2v">–</b></div><canvas class="ch" id="c2" width="544" height="124"></canvas>
+  </div>
+
+  <div id="insp" class="panel"><button class="b x" id="inspx">Close</button><div id="inspbody"></div></div>
+
+  <div id="steps" class="panel">
+    <div id="chips"></div>
+    <div id="stepnow"><span class="k"></span><span class="t">Pick a request on the left to follow it through the system.</span></div>
+    <div class="ev" id="stepev"></div>
+  </div>
+  <div id="est" class="panel"></div>
+
+  <div id="mode"></div>
+  <div id="ripple"></div>
+  <div id="cursor"><svg width="22" height="22" viewBox="0 0 22 22"><path d="M3 2 L3 18 L7.5 14 L10.5 20.5 L13 19.4 L10.1 13 L16 13 Z" fill="#fff" stroke="#18202A" stroke-width="1.4" stroke-linejoin="round"/></svg></div>
+</div></div>
+
+<script>/*__THREE__*/</script>
+<script>
+"use strict";
+const DATA = /*__XRAY_DATA__*/null;
+const { system: SYS, config: CFG, flows: FLOWS } = DATA;
+const EST = CFG.estimates || {};
+const $ = (s) => document.querySelector(s);
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const ease = (t) => (t = clamp(t, 0, 1), t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+const fmtMs = (ms) => !isFinite(ms) ? "∞" : ms < 1000 ? [Math.round(ms), "ms"] : ms < 60000 ? [(ms / 1000).toFixed(ms < 10000 ? 2 : 1), "s"] : ms < 3600000 ? [(ms / 60000).toFixed(1), "min"] : [(ms / 3600000).toFixed(1), "h"];
+const fmtN = (n) => n >= 10000 ? (n / 1000).toFixed(0) + "k" : n >= 1000 ? (n / 1000).toFixed(1) + "k" : n >= 10 ? Math.round(n) + "" : n.toFixed(1);
+const NODES = Object.fromEntries(SYS.nodes.map((n) => [n.id, n]));
+const short = (id) => (NODES[id] ? NODES[id].label : id.split(":").pop());
+
+/* =========================================================================
+   MODEL — one pure model; scene, panels and labels all read from it.
+   ========================================================================= */
+const partnersIds = SYS.nodes.filter((n) => n.kind === "partner").map((n) => n.id);
+const queueIds = SYS.nodes.filter((n) => n.kind === "queue").map((n) => n.id);
+const serviceIds = SYS.nodes.filter((n) => n.kind === "service").map((n) => n.id);
+const mixTotal = FLOWS.reduce((a, f) => a + ((CFG.traffic?.flowMix || {})[f.id] ?? 1), 0) || 1;
+FLOWS.forEach((f) => {
+  f.share = ((CFG.traffic?.flowMix || {})[f.id] ?? 1) / mixTotal;
+  f.partners = [...new Set(f.steps.filter((s) => s.kind === "partner").map((s) => s.to))];
+  const pIdx = f.steps.findIndex((s) => s.kind === "partner");
+  f.failVariant = pIdx >= 0 ? [...f.steps.slice(0, pIdx + 1).map((s, i) => i === pIdx ? { ...s, failed: true } : s), ...f.failureSteps] : null;
+});
+const delayedQueues = new Set();
+FLOWS.forEach((f) => f.steps.forEach((s) => { if (s.kind === "enqueue" && s.delayMs) delayedQueues.add(s.to); }));
+
+function partnerMs(id, c) {
+  const n = NODES[id] || {};
+  if (c.outage[id]) {
+    const retries = n.retries ?? (EST.partnerRetries || {})[id] ?? 3;
+    return (n.timeoutMs || 15000) * retries;
+  }
+  return (EST.partnerLatencyMs || {})[id] ?? (EST.hopMs || {}).partner ?? 450;
+}
+function hopMs(s, c) {
+  if (s.kind === "partner") return partnerMs(s.to, c);
+  return (EST.hopMs || {})[s.kind] ?? ({ call: 1 })[s.kind] ?? 10;
+}
+// work a worker does per job on queue q: sync steps after the consume, by the consumer
+const workCache = {};
+function workSteps(q) {
+  for (const f of FLOWS) {
+    const steps = [...f.steps, ...f.failureSteps];
+    const i = steps.findIndex((s) => s.kind === "consume" && s.from === q);
+    if (i < 0) continue;
+    const unit = steps[i].to, out = [];
+    for (let j = i + 1; j < steps.length; j++) {
+      const s = steps[j];
+      if (s.kind === "consume" || s.kind === "deliver") break; // next async hop belongs to someone else
+      if (s.from === unit && !s.branch && s.kind !== "call") out.push(s);
+    }
+    return out;
+  }
+  return null;
+}
+function workMs(q, c) {
+  const ws = workSteps(q); if (!ws) return 50;
+  return ((EST.hopMs || {}).consume ?? 25) + ws.filter((s) => ["emit", "enqueue", "db-read", "db-write", "partner"].includes(s.kind)).reduce((a, s) => a + hopMs(s, c), 0);
+}
+function concurrencyOf(q) { const n = NODES[q]; return (n && n.concurrency) || 1; }
+
+function rates(c) {
+  const base = (CFG.traffic?.baseRps ?? 8) * c.load;
+  const node = {}, edge = {}, enq = {}, partnerCalls = {}; let failing = 0;
+  const add = (o, k, v) => (o[k] = (o[k] || 0) + v);
+  for (const f of FLOWS) {
+    const r = base * f.share;
+    const down = f.partners.some((p) => c.outage[p]);
+    for (const s of f.steps) {
+      add(edge, s.from + ">" + s.to, r);
+      if (["http", "deliver", "consume", "call"].includes(s.kind)) add(node, s.to, r);
+      if (s.kind === "enqueue") add(enq, s.to, r);
+      if (s.kind === "partner") add(partnerCalls, s.to, r);
+    }
+    if (down) {
+      const pi = f.steps.findIndex((s) => s.kind === "partner" && c.outage[s.to]);
+      const qs = f.steps.slice(0, pi).filter((s) => s.kind === "enqueue" && !s.delayMs).map((s) => s.to);
+      const gate = qs.length ? Math.min(...qs.map((q) => concurrencyOf(q) * 1000 / workMs(q, c))) : Infinity;
+      failing += Math.min(r, gate);
+      for (const s of f.failureSteps) { add(edge, s.from + ">" + s.to, r); if (s.kind === "deliver") add(node, s.to, r); } }
+  }
+  return { base, node, edge, enq, partnerCalls, failing };
+}
+
+function newSim() { return { t: 0, depth: Object.fromEntries(queueIds.map((q) => [q, 0])), hist: [], lastSample: -1 }; }
+function simStep(S, c, dt) {
+  const R = rates(c);
+  for (const q of queueIds) {
+    const lam = R.enq[q] || 0;
+    if (delayedQueues.has(q)) {
+      let delay = 0; FLOWS.forEach((f) => f.steps.forEach((s) => { if (s.to === q && s.delayMs) delay = Math.max(delay, s.delayMs); }));
+      const target = lam * delay / 1000; S.depth[q] += (target - S.depth[q]) * (1 - Math.exp(-dt / 2.5));
+      continue;
+    }
+    const mu = concurrencyOf(q) * 1000 / workMs(q, c);
+    const out = Math.min(mu, lam + S.depth[q] / dt);
+    S.depth[q] = Math.max(0, S.depth[q] + (lam - out) * dt);
+  }
+  S.t += dt;
+  if (S.t - S.lastSample >= 0.25) {
+    S.lastSample = S.t;
+    const m = metrics(S, c);
+    S.hist.push({ t: S.t, backlog: m.bottleneck ? S.depth[m.bottleneck] : 0, e2e: m.e2e });
+    if (S.hist.length > 240) S.hist.shift();
+  }
+}
+function metrics(S, c, flowIdx) {
+  const R = rates(c);
+  const util = {};
+  for (const id of serviceIds) util[id] = (R.node[id] || 0) / (((EST.serviceCapacityRps || {})[id]) ?? 400);
+  const qinfo = {};
+  for (const q of queueIds) {
+    const delayed = delayedQueues.has(q);
+    const mu = delayed ? Infinity : concurrencyOf(q) * 1000 / workMs(q, c);
+    qinfo[q] = { lam: R.enq[q] || 0, mu, depth: S.depth[q], delayed, util: delayed ? 0 : (R.enq[q] || 0) / mu, waitMs: delayed ? 0 : S.depth[q] / mu * 1000 };
+  }
+  let bottleneck = null, worst = -1;
+  for (const q of queueIds) if (!qinfo[q].delayed && qinfo[q].util > worst) { worst = qinfo[q].util; bottleneck = q; }
+  const f = FLOWS[flowIdx ?? 0];
+  let e2e = 0;
+  if (f) {
+    for (const s of f.steps) {
+      if (s.kind === "enqueue" && s.delayMs) break;
+      let ms = hopMs(s, c);
+      if (["http", "deliver", "consume"].includes(s.kind) && util[s.to] != null) { const rho = Math.min(util[s.to], 0.97); ms += ms * rho / (1 - rho); }
+      if (s.kind === "enqueue" && qinfo[s.to]) ms += qinfo[s.to].waitMs;
+      e2e += ms;
+    }
+  }
+  const backlog = queueIds.filter((q) => !qinfo[q].delayed).reduce((a, q) => a + S.depth[q], 0);
+  return { R, util, qinfo, bottleneck, e2e, backlog, failing: R.failing };
+}
+
+/* =========================================================================
+   SCENE
+   ========================================================================= */
+const W = 1600, H = 900;
+const renderer = new THREE.WebGLRenderer({ canvas: $("#gl"), antialias: true, alpha: true, preserveDrawingBuffer: true });
+const LOW = /[?&]low\b/.test(location.search);
+renderer.setPixelRatio(LOW ? 1 : Math.min(2, window.devicePixelRatio || 1));
+renderer.setSize(W, H, false);
+renderer.shadowMap.enabled = !LOW;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputEncoding = THREE.sRGBEncoding;
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(26, W / H, 0.5, 900);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x9aa6b2, 0.95));
+const sun = new THREE.DirectionalLight(0xffffff, 0.85);
+sun.position.set(-18, 40, 26); sun.castShadow = !LOW;
+sun.shadow.mapSize.set(LOW ? 512 : 2048, LOW ? 512 : 2048);
+Object.assign(sun.shadow.camera, { left: -60, right: 60, top: 40, bottom: -40, near: 1, far: 140 });
+scene.add(sun);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.ShadowMaterial({ opacity: 0.13 }));
+floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+
+const COL = { graphite: 0x2a3038, graphite2: 0x343b45, plinth: 0xd7dde3, metal: 0xb7c0c9, accent: 0xf2a100, bad: 0xe0464c, liquid: 0x2f78b5, glass: 0xdfe8f0, light: 0xf3f5f7, edge: 0x9aa5b1 };
+const mat = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: o.r ?? 0.5, metalness: o.m ?? 0.15, transparent: true, opacity: o.op ?? 1, emissive: o.em ?? 0x000000 });
+
+// ---------- layout ----------
+const order = [];
+FLOWS.forEach((f) => f.steps.forEach((s) => [s.from, s.to].forEach((id) => { if (NODES[id]?.kind === "service" && !order.includes(id)) order.push(id); })));
+serviceIds.sort().forEach((id) => { if (!order.includes(id)) order.push(id); });
+const pos = {};
+const SP = 7.2;
+const perRow = order.length > 8 ? Math.ceil(order.length / 2) : order.length;
+order.forEach((id, i) => {
+  const row = Math.floor(i / perRow), col = i % perRow, n = Math.min(perRow, order.length - row * perRow);
+  pos[id] = new THREE.Vector3((col - (n - 1) / 2) * SP, 0, -row * 10);
+});
+const xs = order.map((id) => pos[id].x);
+const minX = Math.min(...xs, 0), maxX = Math.max(...xs, 0);
+const BUS_Z = 6.2, DB_Z = -9 - (order.length > 8 ? 10 : 0);
+const clients = SYS.nodes.filter((n) => n.kind === "app" || n.kind === "external");
+clients.forEach((n, i) => (pos[n.id] = new THREE.Vector3(minX - 11, 0, (i - (clients.length - 1) / 2) * 6)));
+const parts = SYS.nodes.filter((n) => n.kind === "partner");
+parts.forEach((n, i) => (pos[n.id] = new THREE.Vector3(maxX + 13, 0, (i - (parts.length - 1) / 2) * 7 - 1)));
+const DBS = SYS.nodes.filter((n) => n.kind === "database");
+DBS.forEach((n, i) => (pos[n.id] = new THREE.Vector3((i - (DBS.length - 1) / 2) * 9, 0, DB_Z)));
+if (NODES["bus:events"]) pos["bus:events"] = new THREE.Vector3(0, 0.45, BUS_Z);
+const qByOwner = {};
+queueIds.forEach((q) => {
+  const owner = NODES[q].owner; const k = (qByOwner[owner] = (qByOwner[owner] || 0) + 1) - 1;
+  const o = pos[owner] || new THREE.Vector3(0, 0, 0);
+  pos[q] = new THREE.Vector3(o.x + 2.6 + k * 1.9, 0, o.z + 3.3);
+});
+
+// ---------- node meshes ----------
+const objs = {}; // id -> { group, mats:[], anchorY, floors:[], liquid, cap }
+function reg(id, group, anchorY) { objs[id] = { group, mats: [], anchorY, floors: [] }; group.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.userData.node = id; objs[id].mats.push(o.material); } }); scene.add(group); return objs[id]; }
+
+for (const id of order) {
+  const n = NODES[id]; const g = new THREE.Group(); g.position.copy(pos[id]);
+  const plinth = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.3, 3.6), mat(COL.plinth, { r: 0.8 })); plinth.position.y = 0.15; g.add(plinth);
+  const domains = (n.domains && n.domains.length ? n.domains : ["core"]).slice(0, 7);
+  const fh = clamp(0.45 + Math.log10(1 + n.fileCount) * 0.25, 0.5, 1.0);
+  const floors = [];
+  domains.forEach((d, i) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(3.5, fh, 2.8), mat(i % 2 ? COL.graphite2 : COL.graphite, { r: 0.45, m: 0.35 }));
+    m.position.y = 0.3 + fh / 2 + i * (fh + 0.06); m.userData.baseY = m.position.y; m.userData.domain = d; g.add(m); floors.push(m);
+  });
+  const topY = 0.3 + domains.length * (fh + 0.06);
+  const cap = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.12, 2.9), mat(COL.metal, { r: 0.45, m: 0.5, em: 0x000000 })); cap.position.y = topY + 0.06; g.add(cap);
+  (n.workers || []).forEach((w, i) => {
+    const wk = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 1.3, 20), mat(COL.graphite2, { r: 0.45, m: 0.3 }));
+    wk.position.set(-2.55, 0.3 + 0.65, -0.9 + i * 1.0); g.add(wk);
+  });
+  const o = reg(id, g, topY + 0.3); o.floors = floors; o.cap = cap; o.fh = fh;
+}
+for (const n of clients) {
+  const g = new THREE.Group(); g.position.copy(pos[n.id]);
+  const base = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.2, 1.6), mat(COL.plinth, { r: 0.8 })); base.position.y = 0.1; g.add(base);
+  const screen = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.7, 0.18), mat(COL.light, { r: 0.6 })); screen.position.set(0, 1.25, 0); g.add(screen);
+  const face = new THREE.Mesh(new THREE.BoxGeometry(2.3, 1.4, 0.05), mat(COL.graphite, { r: 0.35, m: 0.2 })); face.position.set(0, 1.25, 0.11); g.add(face);
+  g.rotation.y = Math.PI / 2;
+  reg(n.id, g, 2.3);
+}
+for (const n of parts) {
+  const g = new THREE.Group(); g.position.copy(pos[n.id]);
+  const body = new THREE.Mesh(new THREE.BoxGeometry(2.0, 4.2, 2.0), mat(COL.light, { r: 0.55 })); body.position.y = 2.1; g.add(body);
+  const top = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.5, 2.1), mat(COL.graphite, { r: 0.45, m: 0.3 })); top.position.y = 4.45; g.add(top);
+  const band = new THREE.Mesh(new THREE.BoxGeometry(2.04, 0.18, 2.04), mat(COL.metal, { r: 0.5 })); band.position.y = 1.2; g.add(band);
+  const o = reg(n.id, g, 4.9); o.body = body; o.top = top;
+}
+for (const n of DBS) {
+  const g = new THREE.Group(); g.position.copy(pos[n.id]);
+  const small = n.id.startsWith("cache:"); const rad = small ? 2.0 : 3.2, layers = small ? 2 : 3;
+  for (let i = 0; i < layers; i++) {
+    const d = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, 0.95, 48), mat(i % 2 ? COL.graphite2 : COL.graphite, { r: 0.45, m: 0.35 })); d.position.y = 0.5 + i * 1.08; g.add(d);
+    const ring = new THREE.Mesh(new THREE.CylinderGeometry(rad + 0.04, rad + 0.04, 0.08, 48), mat(small ? COL.bad : COL.metal, { r: 0.5, m: 0.5 })); ring.position.y = 1.0 + i * 1.08; g.add(ring);
+  }
+  reg(n.id, g, layers * 1.08 + 0.4);
+}
+if (NODES["bus:events"]) {
+  const g = new THREE.Group();
+  const len = (maxX - minX) + 8;
+  const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, len, 24), mat(COL.metal, { r: 0.45, m: 0.6 }));
+  rail.rotation.z = Math.PI / 2; rail.position.set((minX + maxX) / 2, 0.45, BUS_Z); g.add(rail);
+  const strip = new THREE.Mesh(new THREE.BoxGeometry(len, 0.06, 0.12), mat(COL.graphite, { r: 0.45 })); strip.position.set((minX + maxX) / 2, 0.8, BUS_Z); g.add(strip);
+  for (let x = minX - 3; x <= maxX + 3; x += 3.6) { const leg = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.3, 0.5), mat(COL.graphite)); leg.position.set(x, 0.15, BUS_Z); g.add(leg); }
+  const o = reg("bus:events", g, 1.4); o.anchor = new THREE.Vector3(maxX + 4.6, 1.4, BUS_Z);
+}
+for (const q of queueIds) {
+  const g = new THREE.Group(); g.position.copy(pos[q]);
+  const glass = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.75, 2.6, 32, 1, true), new THREE.MeshStandardMaterial({ color: COL.glass, roughness: 0.15, metalness: 0, transparent: true, opacity: 0.32, side: THREE.DoubleSide, depthWrite: false }));
+  glass.position.y = 1.55; g.add(glass);
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, 0.25, 32), mat(COL.graphite)); base.position.y = 0.12; g.add(base);
+  const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, 0.12, 32), mat(COL.metal, { m: 0.5 })); lid.position.y = 2.9; g.add(lid);
+  const liquid = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.68, 1, 32), mat(COL.liquid, { r: 0.3, op: 0.9 }));
+  liquid.position.y = 0.25; liquid.scale.y = 0.001; g.add(liquid);
+  const o = reg(q, g, 3.3); o.liquid = liquid; o.glass = glass;
+}
+// boundary between your system and the outside world
+if (parts.length) {
+  const bx = maxX + 8.3;
+  const wall = new THREE.Mesh(new THREE.PlaneGeometry(36, 0.03), new THREE.MeshBasicMaterial({ color: 0x8994a0 }));
+  wall.rotation.x = -Math.PI / 2; wall.rotation.z = Math.PI / 2; wall.position.set(bx, 0.02, -1); scene.add(wall);
+}
+
+// ---------- edges ----------
+function anchorOut(id) {
+  const p = pos[id].clone(); const k = NODES[id]?.kind;
+  if (k === "service") return p.add(new THREE.Vector3(0, 1.4, 0));
+  if (k === "queue") return p.add(new THREE.Vector3(0, 1.5, 0));
+  if (k === "partner") return p.add(new THREE.Vector3(0, 2.6, 0));
+  if (k === "database") return p.add(new THREE.Vector3(0, 2.0, 0));
+  if (k === "app" || k === "external") return p.add(new THREE.Vector3(0, 1.3, 0));
+  return p;
+}
+function arc(a, b, lift) { const m = a.clone().add(b).multiplyScalar(0.5); m.y += lift; return new THREE.QuadraticBezierCurve3(a, m, b); }
+function busPoint(x) { return new THREE.Vector3(x, 0.8, BUS_Z); }
+function curveFor(s, emitterX) {
+  const A = anchorOut(s.from), B = anchorOut(s.to);
+  switch (s.kind) {
+    case "emit": { const p = pos[s.from]; return new THREE.CatmullRomCurve3([p.clone().add(new THREE.Vector3(0.6, 1.0, 1.8)), p.clone().add(new THREE.Vector3(0.6, 0.9, 3.6)), busPoint(p.x + 0.6)]); }
+    case "deliver": {
+      const p = pos[s.to]; const ex = emitterX ?? p.x;
+      const pts = [busPoint(ex + 0.6)];
+      if (Math.abs(ex - p.x) > 0.5) pts.push(busPoint((ex + p.x) / 2 - 0.6 * Math.sign(ex - p.x)));
+      pts.push(busPoint(p.x - 0.6), p.clone().add(new THREE.Vector3(-0.6, 0.9, 3.6)), p.clone().add(new THREE.Vector3(-0.6, 1.0, 1.8)));
+      return new THREE.CatmullRomCurve3(pts);
+    }
+    case "db-read": case "db-write": return arc(A.clone().add(new THREE.Vector3(s.kind === "db-read" ? -0.4 : 0.4, 0, -1.2)), B, 4 + Math.abs(A.x - B.x) * 0.12);
+    case "partner": return arc(A, B, 6 + Math.abs(A.x - B.x) * 0.1);
+    case "enqueue": return arc(A.clone().add(new THREE.Vector3(1.2, 0, 1)), B.clone().add(new THREE.Vector3(-0.3, 0.6, 0)), 1.6);
+    case "consume": return arc(A.clone().add(new THREE.Vector3(0, 1.2, 0)), B.clone().add(new THREE.Vector3(-1.2, 0.6, 1)), 2.4);
+    default: return arc(A, B, 2 + Math.abs(A.x - B.x) * 0.08);
+  }
+}
+const edgeObjs = {};
+const edgeMat = () => new THREE.MeshStandardMaterial({ color: COL.edge, roughness: 0.6, transparent: true, opacity: 0.55 });
+function ensureEdge(s) {
+  const key = s.from + ">" + s.to;
+  if (edgeObjs[key]) return edgeObjs[key];
+  const c = curveFor(s);
+  const m = new THREE.Mesh(new THREE.TubeGeometry(c, 48, s.kind === "deliver" || s.kind === "emit" ? 0.05 : 0.045, 6, false), edgeMat());
+  scene.add(m);
+  return (edgeObjs[key] = { key, mesh: m, curve: c, from: s.from, to: s.to, kind: s.kind });
+}
+FLOWS.forEach((f) => [...f.steps, ...f.failureSteps].forEach(ensureEdge));
+SYS.edges.forEach((e) => ensureEdge(e));
+
+// ---------- particles ----------
+const MAXP = 900;
+const dots = new THREE.InstancedMesh(new THREE.SphereGeometry(0.11, 10, 8), new THREE.MeshBasicMaterial({ color: 0xffffff }), MAXP);
+dots.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+dots.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(MAXP * 3), 3);
+scene.add(dots);
+const packet = new THREE.Mesh(new THREE.SphereGeometry(0.3, 20, 16), new THREE.MeshBasicMaterial({ color: COL.accent }));
+const halo = new THREE.Mesh(new THREE.SphereGeometry(0.62, 20, 16), new THREE.MeshBasicMaterial({ color: COL.accent, transparent: true, opacity: 0.22, depthWrite: false }));
+scene.add(packet, halo);
+const trail = [];
+for (let i = 0; i < 10; i++) { const t = new THREE.Mesh(new THREE.SphereGeometry(0.2 * (1 - i / 12), 10, 8), new THREE.MeshBasicMaterial({ color: COL.accent, transparent: true, opacity: 0.5 * (1 - i / 10), depthWrite: false })); scene.add(t); trail.push(t); }
+
+function applyCam(c) {
+  const r = c.r;
+  const target = new THREE.Vector3(c.tx, c.ty, c.tz);
+  camera.position.set(target.x + r * Math.sin(c.ph) * Math.sin(c.th), target.y + r * Math.cos(c.ph), target.z + r * Math.sin(c.ph) * Math.cos(c.th));
+  camera.lookAt(target);
+}
+/* =========================================================================
+   FLOW PLAYBACK — a flow is a timeline; positions are a pure function of time
+   ========================================================================= */
+function stepDur(s, c) { const ms = hopMs(s, c); return clamp(0.6 + 0.22 * Math.log10(1 + ms), 0.62, s.failed ? 2.0 : 1.35); }
+function schedule(steps, c) {
+  const out = []; let t = 0.2; let lastEmitX = {};
+  for (let i = 0; i < steps.length; i++) {
+    const s = steps[i]; const prev = steps[i - 1];
+    if (s.kind === "emit") lastEmitX[s.label] = pos[s.from]?.x;
+    const parallel = prev && s.kind === "deliver" && prev.kind === "deliver" && prev.label === s.label;
+    const start = parallel ? out[out.length - 1].start : t;
+    const d = stepDur(s, c) + (s.delayMs && s.kind === "consume" ? 0.9 : 0);
+    const curve = s.kind === "deliver" ? curveFor(s, lastEmitX[s.label]) : (edgeObjs[s.from + ">" + s.to] || ensureEdge(s)).curve;
+    out.push({ s, i, start, dur: d, curve });
+    t = Math.max(t, start + d);
+  }
+  return { items: out, total: t + 1.0 };
+}
+function variantSteps(fi, failure) { const f = FLOWS[fi]; return failure && f.failVariant ? f.failVariant : f.steps; }
+
+/* =========================================================================
+   UI
+   ========================================================================= */
+$("#title").textContent = CFG.title || SYS.repo;
+$("#subtitle").textContent = CFG.subtitle || "";
+const flowList = $("#flowlist");
+FLOWS.forEach((f, i) => {
+  const b = document.createElement("button"); b.className = "flow"; b.id = "flow-" + i;
+  b.innerHTML = `<span class="n">${f.steps.length} hops</span><div class="t"></div><div class="c"></div>`;
+  b.querySelector(".t").textContent = f.title; b.querySelector(".c").textContent = f.caption || [...new Set(f.steps.map((s) => s.to).filter((x) => NODES[x]?.kind === "service"))].map(short).join(" → ");
+  b.onclick = () => userAction(() => playFlow(i, false));
+  flowList.appendChild(b);
+});
+const outBox = $("#outages");
+partnersIds.forEach((p) => {
+  const b = document.createElement("button"); b.className = "b"; b.id = "outage-" + p.split(":")[1];
+  b.textContent = `Take ${short(p)} down`;
+  b.onclick = () => userAction(() => { UI.outage[p] = !UI.outage[p]; const fi = FLOWS.findIndex((f) => f.partners.includes(p)); if (UI.outage[p] && fi >= 0) playFlow(fi, true); });
+  outBox.appendChild(b);
+});
+// free area of the console (between the panels), in stage pixels
+const FREE = { x0: 372, x1: 1262, y0: 40, y1: 686 };
+camera.setViewOffset(W, H, W / 2 - (FREE.x0 + FREE.x1) / 2, H / 2 - (FREE.y0 + FREE.y1) / 2, W, H);
+function anchorPts(id) { const p = pos[id]; const h = NODES[id].kind === "service" ? 5 : NODES[id].kind === "partner" ? 5.5 : 3.5; return [p.clone(), p.clone().add(new THREE.Vector3(0, h, 0))]; }
+// solve camera distance so every listed node lands inside the free area
+function fitView(ids, th, ph, pad = 0.9) {
+  const bad = ids.filter((id) => !NODES[id] || !pos[id]);
+  if (bad.length && window.__xrayDebug) console.warn("fitView: unknown ids", bad);
+  ids = ids.filter((id) => NODES[id] && pos[id]);
+  if (!ids.length) ids = Object.keys(pos).filter((id) => NODES[id]);
+  const pts = ids.flatMap(anchorPts);
+  if (ids.includes("bus:events")) pts.push(busPoint(minX - 3), busPoint(maxX + 3));
+  const box = new THREE.Box3().setFromPoints(pts); const c = box.getCenter(new THREE.Vector3());
+  let lo = 4, hi = 400;
+  for (let i = 0; i < 30; i++) {
+    const r = (lo + hi) / 2; applyCam({ th, ph, r, tx: c.x, ty: c.y * 0.4, tz: c.z }); camera.updateMatrixWorld();
+    const ok = pts.every((q) => { const v = q.clone().project(camera); const x = (v.x * 0.5 + 0.5) * W, y = (-v.y * 0.5 + 0.5) * H; const mx = (FREE.x1 - FREE.x0) * pad / 2, my = (FREE.y1 - FREE.y0) * pad / 2; return v.z < 1 && x > FREE.x0 + mx && x < FREE.x1 - mx && y > FREE.y0 + my + 28 && y < FREE.y1 - my; });
+    ok ? (hi = r) : (lo = r);
+  }
+  return { th, ph, r: hi, tx: c.x, ty: c.y * 0.4, tz: c.z };
+}
+const ALL = Object.keys(objs);
+const VIEWS = {
+  Overview: fitView(ALL, 0.5, 0.96, 0.02),
+  Top: fitView(ALL, 0.0, 0.12, 0.04),
+};
+if (NODES["bus:events"]) VIEWS["Event bus"] = fitView(["bus:events", ...order], 0.12, 1.28, 0.02);
+if (parts.length) VIEWS.Outside = fitView([...parts.map((p) => p.id), ...new Set(parts.map((p) => p.owner).filter((o) => pos[o]))], -0.75, 1.02, 0.12);
+const viewBox = $("#views");
+Object.keys(VIEWS).forEach((v) => { const b = document.createElement("button"); b.className = "b"; b.textContent = v; b.id = "view-" + v.replace(/\s/g, ""); b.onclick = () => userAction(() => setView(v)); viewBox.appendChild(b); });
+$("#est").innerHTML = `<b>Read from code:</b> services, routes, events, queues, worker concurrency${parts.some((p) => p.timeoutMs) ? ", partner timeouts" : ""}. <b>Estimated:</b> hop latencies and base traffic (${CFG.traffic?.baseRps ?? 8} req/s). ${EST.note ? "" : ""}`;
+
+// gauges
+const glist = $("#glist"); const gRows = {};
+[...order, ...queueIds, ...partnersIds].forEach((id) => {
+  const d = document.createElement("div"); d.className = "g";
+  d.innerHTML = `<span class="nm"></span><span class="bar"><i></i></span><span class="v"></span>`;
+  d.querySelector(".nm").textContent = short(id) + (NODES[id].kind === "queue" ? " queue" : "");
+  glist.appendChild(d); gRows[id] = d;
+  if (id === order[order.length - 1] && queueIds.length) glist.appendChild(Object.assign(document.createElement("div"), { className: "sep" }));
+});
+
+// labels
+const labelBox = $("#labels"); const labels = {};
+for (const id of Object.keys(objs)) {
+  const n = NODES[id]; const d = document.createElement("div");
+  d.className = "lbl k-" + n.kind; d.innerHTML = `<b></b><div class="m"></div>`;
+  d.querySelector("b").textContent = n.kind === "queue" ? n.label : n.label;
+  d.onclick = (e) => { e.stopPropagation(); userAction(() => inspect(id)); };
+  labelBox.appendChild(d); labels[id] = d;
+}
+const tagEl = document.createElement("div"); tagEl.className = "tag"; tagEl.style.display = "none"; $("#overlay").appendChild(tagEl);
+
+// inspector
+function inspect(id) {
+  UI.inspect = id;
+  const n = NODES[id]; const body = $("#inspbody");
+  const li = (arr, f) => arr && arr.length ? `<ul>${arr.map(f).join("")}</ul>` : `<ul><li>none found</li></ul>`;
+  const evs = (e) => e ? ` <code>${esc(e.file)}:${e.line}</code>` : "";
+  let h = `<h2>${esc(n.label)}</h2><div class="p">${esc(n.path || n.kind)}${n.fileCount ? ` · ${n.fileCount} files` : ""}</div>`;
+  if (n.kind === "service") {
+    h += `<h3>Parts</h3>${li(n.domains, (d) => `<li>${esc(d)}</li>`)}`;
+    h += `<h3>Endpoints</h3>${li(n.routes, (r) => `<li>${r.method} ${esc(r.path)}${evs(r.evidence)}</li>`)}`;
+    h += `<h3>Announces</h3>${li(n.emits, (e) => `<li>${esc(e.event)}${evs(e.evidence)}</li>`)}`;
+    h += `<h3>Reacts to</h3>${li(n.listens, (e) => `<li>${esc(e.event)}${evs(e.evidence)}</li>`)}`;
+    h += `<h3>Background workers</h3>${li(n.workers, (w) => `<li>${esc(w.queue)} · ${w.concurrency ?? "?"} at a time${w.concurrencyEnv ? ` (${esc(w.concurrencyEnv)})` : ""}${evs(w.evidence)}</li>`)}`;
+  } else if (n.kind === "queue") {
+    const m = lastMetrics.qinfo[id];
+    h += `<h3>Workers</h3><ul><li>${n.concurrency ?? "1 (not found in code)"} jobs at a time${n.concurrencyEnv?.length ? ` · env ${esc(n.concurrencyEnv.join(", "))}` : ""}</li><li>~${Math.round(workMs(id, UI))} ms of work per job (est.)</li><li>drains ${m && isFinite(m.mu) ? fmtN(m.mu) : "–"} jobs/s · receives ${m ? fmtN(m.lam) : "–"}/s</li></ul>`;
+    h += `<h3>Defined at</h3><ul><li>${evs(n.evidence)}</li></ul>`;
+  } else if (n.kind === "partner") {
+    h += `<h3>Outside your system</h3><ul><li>timeout ${n.timeoutMs ? n.timeoutMs + " ms" + (n.timeoutEnv ? ` (${esc(n.timeoutEnv)})` : "") : "not found in code (15 s assumed)"}</li><li>${n.retries ?? (EST.partnerRetries || {})[id] ?? 3} attempts before giving up${n.retries ? "" : " (assumed)"}</li><li>base URL from ${esc(n.baseUrlEnv || "?")}</li></ul><h3>Client</h3><ul><li>${evs(n.evidence)}</li></ul>`;
+  } else if (n.kind === "database") {
+    h += `<h3>Tables (${n.models?.length || 0})</h3>${li((n.models || []).slice(0, 40), (m) => `<li>${esc(m)}</li>`)}`;
+  } else if (n.kind === "bus") {
+    h += `<h3>Events (${n.events?.length || 0})</h3>${li(n.events || [], (e) => `<li>${esc(e)}</li>`)}`;
+    if (SYS.unresolved?.eventsWithoutListener?.length) h += `<h3>Announced, nobody listening</h3>${li(SYS.unresolved.eventsWithoutListener, (e) => `<li>${esc(e)}</li>`)}`;
+  }
+  body.innerHTML = h;
+  $("#insp").style.display = "block"; $("#gauges").style.display = "none";
+}
+function closeInspect() { UI.inspect = null; $("#insp").style.display = "none"; $("#gauges").style.display = "block"; }
+$("#inspx").onclick = () => userAction(closeInspect);
+function esc(s) { return String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+/* =========================================================================
+   STATE — user mode and tour mode both write UI; render reads it.
+   ========================================================================= */
+const UI = { load: 1, speed: 1, outage: {}, inspect: null, flow: null, failure: false, flowT: 0, sched: null, explode: 0, view: "Overview", cam: null };
+let lastMetrics = null;
+function playFlow(i, failure) { UI.flow = i; UI.failure = !!failure; UI.flowT = 0; UI.sched = schedule(variantSteps(i, failure), UI); buildChips(); }
+function setView(v) { UI.view = v; camGoal = { ...VIEWS[v] }; }
+
+const loadEl = $("#load"), speedEl = $("#speed");
+loadEl.max = CFG.traffic?.maxMultiplier ?? 20;
+loadEl.oninput = () => userAction(() => { UI.load = +loadEl.value; });
+speedEl.oninput = () => userAction(() => { UI.speed = +speedEl.value; });
+
+// camera (orbit)
+let camGoal = { ...VIEWS.Overview };
+UI.cam = { ...VIEWS.Overview };
+let drag = null;
+const stage = $("#stage");
+stage.addEventListener("pointerdown", (e) => { if (e.target.id === "gl") { drag = { x: e.clientX, y: e.clientY, moved: 0 }; } });
+window.addEventListener("pointermove", (e) => {
+  if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.moved += Math.abs(dx) + Math.abs(dy); drag.x = e.clientX; drag.y = e.clientY;
+  userAction(() => { camGoal.th -= dx * 0.005; camGoal.ph = clamp(camGoal.ph - dy * 0.004, 0.06, 1.45); UI.cam.th = camGoal.th; UI.cam.ph = camGoal.ph; });
+});
+window.addEventListener("pointerup", (e) => {
+  if (drag && drag.moved < 4 && e.target.id === "gl") pick(e);
+  drag = null;
+});
+stage.addEventListener("wheel", (e) => { e.preventDefault(); userAction(() => { camGoal.r = clamp(camGoal.r * (1 + e.deltaY * 0.0012), VIEWS.Overview.r * 0.15, VIEWS.Overview.r * 2); }); }, { passive: false });
+window.addEventListener("keydown", (e) => {
+  if (e.key === "h" || e.key === "H") { stage.classList.toggle("hidepanels"); return; }
+  const k = +e.key; if (k >= 1 && k <= FLOWS.length) userAction(() => playFlow(k - 1, false));
+  if (e.key === "Escape") userAction(closeInspect);
+});
+const ray = new THREE.Raycaster();
+function pick(e) {
+  const r = $("#gl").getBoundingClientRect();
+  const v = new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(v, camera);
+  const hit = ray.intersectObjects(scene.children, true).find((h) => h.object.userData.node);
+  userAction(() => (hit ? inspect(hit.object.userData.node) : closeInspect()));
+}
+
+/* =========================================================================
+   TOUR — deterministic script; a cursor drives the same buttons a visitor would.
+   ========================================================================= */
+const hub = (() => { const cnt = {}; FLOWS.forEach((f) => f.steps.forEach((s) => { for (const id of [s.from, s.to]) if (NODES[id]?.kind === "service") cnt[id] = (cnt[id] || 0) + 1; })); for (const id of order) { const n = NODES[id]; cnt[id] = (cnt[id] || 0) + 3 * Math.min(6, (n.domains || []).length) + 2 * (n.routes || []).length + (n.listens || []).length + 2 * (n.workers || []).length; } return Object.entries(cnt).sort((a, b) => b[1] - a[1])[0]?.[0] || order[0]; })();
+const outagePartner = (() => { const f = FLOWS.find((f) => f.failVariant) || FLOWS.find((f) => f.partners.length); return f ? f.partners[0] : partnersIds[0]; })();
+const surge = (() => {
+  const c0 = { load: 1, outage: {} }; const R = rates(c0); let best = null;
+  for (const q of queueIds) { if (delayedQueues.has(q) || !R.enq[q]) continue; const mu = concurrencyOf(q) * 1000 / workMs(q, c0); const ratio = mu / R.enq[q]; if (!best || ratio < best.ratio) best = { q, ratio }; }
+  const max = CFG.traffic?.maxMultiplier ?? 20;
+  return { q: best?.q, mult: best ? clamp(Math.ceil(best.ratio * 1.7), 3, max) : Math.min(8, max) };
+})();
+const BEATS = [];
+(function buildBeats() {
+  const add = (b) => BEATS.push(b);
+  add({ kind: "intro", dur: 3.4, view: { ...VIEWS.Overview, th: 0.62, r: VIEWS.Overview.r * 1.06 } });
+  if (FLOWS[0]) add({ kind: "flow", flow: 0, dur: schedule(variantSteps(0, false), { load: 1, outage: {} }).total + 0.9, click: "#flow-0", view: VIEWS.Overview });
+  add({ kind: "inspect", node: hub, dur: 5.2, clickNode: hub, view: fitView([hub], 0.45, 1.02, 0.55) });
+  if (surge.q) add({ kind: "traffic", from: 1, to: surge.mult, dur: 7.5, drag: "#load", view: fitView([surge.q, NODES[surge.q].owner, ...NODES[surge.q].consumers].filter((x) => pos[x]), 0.3, 1.0, 0.3) });
+  if (outagePartner) {
+    const fi = Math.max(0, FLOWS.findIndex((f) => f.partners.includes(outagePartner)));
+    const dur = schedule(variantSteps(fi, true), { load: surge.mult, outage: { [outagePartner]: true } }).total + 1.2;
+    add({ kind: "outage", partner: outagePartner, flow: fi, dur: clamp(dur, 7, 16), click: "#outage-" + outagePartner.split(":")[1], view: fitView([...new Set([outagePartner, ...[...FLOWS[fi].steps, ...FLOWS[fi].failureSteps].filter((s) => s.kind === "partner" || s.branch === "failure").flatMap((s) => [s.from, s.to])])].filter((x) => pos[x] && NODES[x].kind !== "database"), -0.45, 1.0, 0.1) });
+  }
+  if (surge.q) add({ kind: "traffic", from: surge.mult, to: 1, dur: 3.2, drag: "#load", view: VIEWS.Overview });
+  if (FLOWS[1]) add({ kind: "flow", flow: 1, dur: schedule(variantSteps(1, false), { load: 1, outage: {} }).total + 0.9, click: "#flow-1", view: VIEWS.Overview });
+  add({ kind: "outro", dur: 3.4, view: { ...VIEWS.Overview, th: 0.42, r: VIEWS.Overview.r * 1.04 } });
+  let t = 0; for (const b of BEATS) { b.t0 = t; t += b.dur; }
+})();
+const TOUR_LEN = BEATS.reduce((a, b) => a + b.dur, 0);
+
+// controls as a pure function of tour time
+function tourControls(t) {
+  t = ((t % TOUR_LEN) + TOUR_LEN) % TOUR_LEN;
+  let load = 1; const outage = {}; let beat = BEATS[0];
+  for (const b of BEATS) {
+    if (b.t0 > t) break; beat = b;
+    const lt = t - b.t0;
+    if (b.kind === "traffic") load = lerp(b.from, b.to, ease((lt - 0.9) / (b.dur - 2.2 > 1 ? 2.4 : 1.4)));
+    if (b.kind === "outage" && lt > 0.9 && lt < b.dur - 0.7) outage[b.partner] = true;
+  }
+  return { t, load, outage, beat, lt: t - beat.t0 };
+}
+// simulation advanced deterministically to tour time
+let tourSim = newSim(), tourSimT = 0;
+function tourSimAt(t) {
+  if (t < tourSimT - 1e-6) { tourSim = newSim(); tourSimT = 0; }
+  const dt = 1 / 30;
+  while (tourSimT + dt <= t + 1e-9) { const c = tourControls(tourSimT); simStep(tourSim, { load: c.load, outage: c.outage }, dt); tourSimT += dt; }
+  return tourSim;
+}
+
+const cursorEl = $("#cursor"), rippleEl = $("#ripple");
+function centerOf(sel) {
+  const el = typeof sel === "string" ? $(sel) : sel; if (!el) return null;
+  const r = el.getBoundingClientRect(), s = stage.getBoundingClientRect(), k = s.width / W;
+  return { x: (r.left - s.left + r.width / 2) / k, y: (r.top - s.top + r.height / 2) / k, w: r.width / k };
+}
+function sliderPoint(sel, v) { const el = $(sel); const c = centerOf(el); const min = +el.min, max = +el.max; return { x: c.x - c.w / 2 + 8 + (c.w - 16) * (v - min) / (max - min), y: c.y }; }
+const HOME = { x: 820, y: 560 };
+function applyTour(t) {
+  const c = tourControls(t); const b = c.beat; const lt = c.lt;
+  // state
+  UI.load = c.load; UI.outage = c.outage; loadEl.value = c.load;
+  if ((b.kind === "flow" && lt > 0.95) || (b.kind === "outage" && lt > 1.0)) {
+    const fi = b.flow, fail = b.kind === "outage";
+    if (UI.flow !== fi || UI.failure !== fail || !UI.sched || UI._beat !== b) { UI.flow = fi; UI.failure = fail; UI.sched = schedule(variantSteps(fi, fail), { load: c.load, outage: fail ? { [b.partner]: true } : {} }); UI._beat = b; buildChips(); }
+    UI.flowT = lt - (fail ? 1.0 : 0.95);
+  } else if (b.kind !== "flow" && b.kind !== "outage") { if (UI.sched) { UI.sched = null; buildChips(); } UI._beat = b; }
+  if (b.kind === "inspect" && lt > 1.0 && lt < b.dur - 0.6) { if (UI.inspect !== b.node) inspect(b.node); UI.explode = ease((lt - 1.0) / 1.2) * (1 - ease((lt - (b.dur - 1.6)) / 1.0)); }
+  else { if (UI.inspect) closeInspect(); UI.explode = 0; }
+  // camera: ease from previous beat's view
+  const i = BEATS.indexOf(b); const prev = BEATS[i - 1]?.view || b.view; const k = ease(lt / 1.6);
+  const v = {}; for (const key of ["th", "ph", "r", "tx", "ty", "tz"]) v[key] = lerp(prev[key], b.view[key], k);
+  if (b.kind === "intro" || b.kind === "outro") v.th += Math.sin(t * 0.25) * 0.05;
+  UI.cam = v;
+  // cursor
+  let target = HOME, press = 0, show = 1;
+  const prevPt = UI._cursor || HOME;
+  if (b.click) { const p = centerOf(b.click); if (p) { target = p; press = lt > 0.8 && lt < 1.05 ? 1 : 0; } }
+  if (b.kind === "outage" && lt > b.dur - 1.0) { const p = centerOf(b.click); target = p; press = lt > b.dur - 0.75 && lt < b.dur - 0.55 ? 1 : 0; }
+  if (b.clickNode && labels[b.clickNode]) { const p = centerOf(labels[b.clickNode]); if (p) { target = p; press = lt > 0.8 && lt < 1.05 ? 1 : 0; } }
+  if (b.drag) { const p = sliderPoint(b.drag, c.load); target = p; press = lt > 0.75 && lt < b.dur - 0.3 ? 1 : 0; }
+  if (b.kind === "intro" || b.kind === "outro") { target = HOME; show = b.kind === "intro" ? clamp(lt / 1.2, 0, 1) : 1; }
+  const move = ease(clamp(lt / 0.8, 0, 1));
+  const from = UI._beatCursorFrom && UI._beatCursorFrom.b === b ? UI._beatCursorFrom.p : (UI._beatCursorFrom = { b, p: { ...prevPt } }).p;
+  const p = b.drag && lt > 0.8 ? target : { x: lerp(from.x, target.x, move), y: lerp(from.y, target.y, move) };
+  UI._cursor = p;
+  cursorEl.style.opacity = show; cursorEl.style.transform = `translate(${p.x - 3}px,${p.y - 2}px) scale(${press ? 0.9 : 1})`;
+  rippleEl.style.left = p.x + "px"; rippleEl.style.top = p.y + "px"; rippleEl.style.opacity = press ? 0.9 : 0;
+  // button states
+  syncOutageButtons();
+}
+function syncOutageButtons() { partnersIds.forEach((pid) => { const b = $("#outage-" + pid.split(":")[1]); b.classList.toggle("down", !!UI.outage[pid]); b.textContent = UI.outage[pid] ? `Bring ${short(pid)} back` : `Take ${short(pid)} down`; }); }
+
+// what each beat means, in words, derived from the same model
+function beatCaption(b, M) {
+  const ev = (e) => e ? `<code class="f">${esc(e.file)}:${e.line}</code><code>${esc(e.code || "")}</code>` : "";
+  const s = SYS.stats;
+  const pl = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+  if (b.kind === "intro") return [[pl(order.length, NODES[order[0]]?.core || SYS.nodes.some((x) => x.core) ? "part" : "service"), s.events ? pl(s.events, "event") : null, queueIds.length ? pl(queueIds.length, "queue") : null, parts.length ? pl(parts.length, "outside service") : null].filter(Boolean).join(", "), `Read from ${s.files} files in ${esc(SYS.repo)}. Nothing here is drawn by hand.`];
+  if (b.kind === "inspect") { const n = NODES[b.node]; return [[`${n.label}: ${pl((n.domains || []).length, "part")}`, (n.routes || []).length ? pl(n.routes.length, "endpoint") : null, (n.listens || []).length ? `reacts to ${pl(n.listens.length, "event")}` : null, (n.workers || []).length ? pl(n.workers.length, "background worker") : null].filter(Boolean).join(", "), esc((n.domains || []).join(" · "))]; }
+  if (b.kind === "traffic" && b.to > b.from) {
+    const q = surge.q, n = NODES[q], w = (NODES[n.consumers?.[0]]?.workers || []).find((x) => x.queue === n.label) || {};
+    const m = M.qinfo[q]; const via = (workSteps(q) || []).filter((st) => st.kind === "partner").sort((a, b) => hopMs(b, UI) - hopMs(a, UI))[0];
+    return [`${Math.round(b.to)}× traffic. ${short(n.consumers?.[0])} runs ${n.concurrency ?? 1} ${n.label} jobs at a time, each ~${Math.round(workMs(q, UI))} ms${via ? ` waiting on ${short(via.to)}` : ""}. It drains ${fmtN(m.mu)}/s and gets ${fmtN(m.lam)}/s.`, ev(w.evidence || n.evidence)];
+  }
+  if (b.kind === "traffic") return [`Back to normal traffic. The backlog drains as the workers catch up.`, ""];
+  if (b.kind === "outage") {
+    const n = NODES[b.partner]; const failEv = FLOWS[b.flow]?.failureSteps.find((st) => st.kind === "emit");
+    return [`${n.label} stops answering. Every call now waits out the ${fmtMs(n.timeoutMs || 15000).join(" ")} timeout, ${n.retries ?? 3} tries${failEv ? `, then announces ${failEv.label}` : ""}.`, ev(n.evidence)];
+  }
+  if (b.kind === "outro") return [`Click anything. Take a partner down, push the traffic, follow a request.`, ""];
+  return null;
+}
+
+/* =========================================================================
+   MODE — tour plays until someone touches anything; 25 s idle brings it back
+   ========================================================================= */
+const RECORD = /[?&]record\b/.test(location.search);
+let mode = RECORD ? "record" : "tour", idleAt = 0, tourStart = performance.now() / 1000;
+const userSim = newSim();
+function userAction(fn) {
+  if (mode === "tour") {
+    mode = "user"; cursorEl.style.opacity = 0; rippleEl.style.opacity = 0;
+    Object.assign(userSim, newSim()); userSim.depth = { ...tourSim.depth };
+    camGoal = { ...UI.cam };
+  }
+  idleAt = performance.now() / 1000;
+  fn && fn();
+  syncOutageButtons();
+  $("#loadv").textContent = (+UI.load).toFixed(UI.load < 10 ? 1 : 0) + "×"; $("#speedv").textContent = (+UI.speed).toFixed(2).replace(/0$/, "") + "×";
+}
+["pointerdown", "wheel", "keydown"].forEach((ev) => window.addEventListener(ev, () => { if (mode === "user") idleAt = performance.now() / 1000; }, { passive: true }));
+
+/* =========================================================================
+   RENDER — reads UI + sim, writes scene, labels, panels
+   ========================================================================= */
+const tmpM = new THREE.Matrix4(), tmpV = new THREE.Vector3(), tmpC = new THREE.Color();
+const C_DOT = new THREE.Color(0x56616d), C_ACC = new THREE.Color(COL.accent), C_BAD = new THREE.Color(COL.bad);
+function buildChips() {
+  const box = $("#chips"); box.innerHTML = "";
+  if (!UI.sched) return;
+  UI.sched.items.forEach((it) => { const d = document.createElement("span"); d.className = "chip" + (it.s.branch === "failure" || it.s.failed ? " fail" : ""); d.textContent = chipText(it.s); box.appendChild(d); });
+}
+const KIND = { call: "calls", http: "request", "db-read": "read", "db-write": "write", emit: "announce", deliver: "hears", enqueue: "queue", consume: "worker picks up", partner: "calls" };
+function chipText(s) { if (s.kind === "call") return short(s.to); return s.kind === "db-read" || s.kind === "db-write" ? s.label.split(".")[0] : s.kind === "http" ? short(s.to) : s.kind === "deliver" ? short(s.to) : s.kind === "partner" ? short(s.to) : s.kind === "consume" ? short(s.to) + " worker" : s.label; }
+function sentence(s) {
+  const a = short(s.from), b = short(s.to);
+  switch (s.kind) {
+    case "http": return [`${a} → ${b}`, s.label];
+    case "call": return [`${a} hands off to ${b}`, s.label];
+    case "db-read": return [`${a} reads`, s.label];
+    case "db-write": return [`${a} writes`, s.label];
+    case "emit": return [`${a} announces`, s.label];
+    case "deliver": return [`${b} hears`, s.label];
+    case "enqueue": return [`${a} queues a job`, s.label + (s.delayMs ? `, runs in ${fmtMs(s.delayMs).join(" ")}` : "")];
+    case "consume": return [`${b} worker picks it up`, s.delayMs ? `${fmtMs(s.delayMs).join(" ")} later` : s.label];
+    case "partner": return s.failed ? [`${b} doesn't answer`, `${s.label} times out`] : [`${a} calls ${b}`, s.label];
+  }
+  return [a + " → " + b, s.label];
+}
+
+function frame(nowS, dt) {
+  // ----- advance state
+  let S;
+  if (mode === "tour" || mode === "record") {
+    const t = mode === "record" ? REC_T : nowS - tourStart;
+    applyTour(t); S = tourSimAt(((t % TOUR_LEN) + TOUR_LEN) % TOUR_LEN);
+  } else {
+    simStep(userSim, UI, Math.min(dt, 0.1)); S = userSim;
+    if (UI.sched) UI.flowT += dt * UI.speed;
+    if (nowS - idleAt > 25) { mode = "tour"; tourStart = nowS; tourSim = newSim(); tourSimT = 0; }
+    for (const k of ["th", "ph", "r", "tx", "ty", "tz"]) UI.cam[k] = lerp(UI.cam[k], camGoal[k], 1 - Math.exp(-dt * 5));
+    UI.explode = lerp(UI.explode, UI.inspect && NODES[UI.inspect].kind === "service" ? 1 : 0, 1 - Math.exp(-dt * 5));
+  }
+  const fi = UI.flow ?? 0;
+  const M = (lastMetrics = metrics(S, UI, fi));
+  applyCam(UI.cam);
+  $("#mode").textContent = mode === "user" ? "You're driving · drag to orbit · scroll to zoom · H hides panels" : mode === "tour" ? "Tour · click anything to take over" : "";
+  $("#mode").style.display = mode === "record" ? "none" : "";
+
+  // ----- current step
+  let cur = null, curK = 0;
+  if (UI.sched) {
+    const its = UI.sched.items;
+    for (const it of its) if (UI.flowT >= it.start) { cur = it; }
+    if (cur) curK = clamp((UI.flowT - cur.start) / cur.dur, 0, 1);
+    if (UI.flowT > UI.sched.total) cur = null;
+  }
+  const activeEdges = new Set(); const activeNodes = new Set();
+  if (cur) { for (const it of UI.sched.items) if (UI.flowT >= it.start && UI.flowT <= it.start + it.dur + 0.15) { activeEdges.add(it.s.from + ">" + it.s.to); activeNodes.add(it.s.to); } }
+
+  // ----- nodes
+  const focus = UI.inspect && UI.explode > 0.02 ? UI.inspect : null;
+  for (const [id, o] of Object.entries(objs)) {
+    const dim = focus && id !== focus ? 1 - 0.85 * UI.explode : 1;
+    for (const m of o.mats) { if (m.userData.baseOp == null) m.userData.baseOp = m.opacity; m.opacity = m.userData.baseOp * dim; m.depthWrite = dim > 0.9 && m.userData.baseOp > 0.5; }
+    const k = NODES[id].kind;
+    if (k === "service") {
+      const u = M.util[id] || 0;
+      const ex = id === focus ? UI.explode : 0;
+      o.floors.forEach((f, i) => { f.position.y = f.userData.baseY + ex * i * 0.9; });
+      o.cap.position.y = o.floors.at(-1).position.y + o.fh / 2 + 0.06 + ex * 0.9;
+      o.anchorY = o.cap.position.y + 0.3;
+      o.cap.material.emissive.setHex(u > 1 ? 0x5a0d10 : activeNodes.has(id) ? 0x4a3000 : u > 0.7 ? 0x3a2600 : 0x000000);
+      o.cap.material.color.setHex(u > 1 ? COL.bad : activeNodes.has(id) ? COL.accent : COL.metal);
+    } else if (k === "queue") {
+      const q = M.qinfo[id]; const cap = q.delayed ? Math.max(50, q.lam * 1200) : Math.max(40, q.mu * 20);
+      const h = clamp(Math.log10(1 + q.depth) / Math.log10(1 + cap), 0.002, 1) * 2.5;
+      o.liquid.scale.y = h; o.liquid.position.y = 0.25 + h / 2;
+      o.liquid.material.color.setHex(q.util > 1 ? COL.bad : q.util > 0.75 ? COL.accent : COL.liquid);
+    } else if (k === "partner") {
+      const down = !!UI.outage[id];
+      o.top.material.color.setHex(down ? COL.bad : activeNodes.has(id) ? COL.accent : COL.graphite);
+      o.body.material.color.setHex(down ? 0xf6d9da : COL.light);
+    } else if (k === "database") {
+      // database stays neutral; its label carries the numbers
+    }
+  }
+  // ----- edges
+  for (const e of Object.values(edgeObjs)) {
+    const on = activeEdges.has(e.key);
+    const rate = M.R.edge[e.key] || 0;
+    const failOn = rate > 0 && e.to === "bus:events" ? false : false;
+    e.mesh.material.color.setHex(on ? COL.accent : COL.edge);
+    e.mesh.material.opacity = (focus ? (e.from === focus || e.to === focus ? 0.7 : 0.1) : rate > 0 ? 0.6 : 0.22) + (on ? 0.35 : 0);
+  }
+  // ----- ambient traffic dots (pure function of time)
+  const T = mode === "user" ? userSim.t : S.t;
+  let n = 0;
+  for (const e of Object.values(edgeObjs)) {
+    const rate = M.R.edge[e.key] || 0; if (rate <= 0) continue;
+    const kcount = clamp(Math.ceil(Math.sqrt(rate) * 1.1), 1, 14);
+    const isFail = FLOWS.some((f) => f.failureSteps.some((s) => s.from + ">" + s.to === e.key)) && !FLOWS.some((f) => f.steps.some((s) => s.from + ">" + s.to === e.key));
+    const blocked = e.kind === "partner" && UI.outage[e.to];
+    for (let j = 0; j < kcount && n < MAXP; j++) {
+      let u = ((T * (blocked ? 0.06 : 0.32) + j / kcount + (e.key.length % 7) * 0.13) % 1);
+      if (blocked) u *= 0.55;
+      e.curve.getPointAt(u, tmpV);
+      const sc = focus && !(e.from === focus || e.to === focus) ? 0.001 : 1;
+      tmpM.makeScale(sc, sc, sc).setPosition(tmpV); dots.setMatrixAt(n, tmpM);
+      dots.setColorAt(n, isFail || blocked ? C_BAD : C_DOT); n++;
+    }
+  }
+  dots.count = n; dots.instanceMatrix.needsUpdate = true; if (dots.instanceColor) dots.instanceColor.needsUpdate = true;
+  // ----- packet
+  const showP = !!cur && !focus;
+  packet.visible = halo.visible = showP; trail.forEach((t) => (t.visible = showP));
+  if (showP) {
+    const bad = cur.s.failed || cur.s.branch === "failure";
+    const ku = cur.s.failed ? Math.min(curK, 0.5 + 0.03 * Math.sin(T * 30)) : ease(curK);
+    cur.curve.getPointAt(clamp(ku, 0, 1), packet.position); halo.position.copy(packet.position);
+    packet.material.color.setHex(bad ? COL.bad : COL.accent); halo.material.color.setHex(bad ? COL.bad : COL.accent);
+    halo.scale.setScalar(1 + 0.18 * Math.sin(T * 9));
+    trail.forEach((t, i) => { cur.curve.getPointAt(clamp(ku - (i + 1) * 0.022, 0, 1), t.position); t.material.color.setHex(bad ? COL.bad : COL.accent); });
+  }
+  renderer.render(scene, camera);
+
+  // ----- labels
+  const proj = (v) => { v.project(camera); return { x: (v.x * 0.5 + 0.5) * W, y: (-v.y * 0.5 + 0.5) * H, z: v.z }; };
+  for (const [id, d] of Object.entries(labels)) {
+    const o = objs[id]; const k = NODES[id].kind;
+    const side = k === "queue";
+    const a = (o.anchor ? o.anchor.clone() : pos[id].clone().add(side ? new THREE.Vector3(0.95, 1.6, 0) : new THREE.Vector3(0, o.anchorY, 0)));
+    const p = proj(a);
+    const off = p.x < -150 || p.x > W + 150 || p.y < -60 || p.y > H + 60;
+    d.style.display = p.z > 1 || off ? "none" : ""; d.style.left = p.x + "px"; d.style.top = p.y + "px";
+    if (side) d.style.transform = "translate(6px,-50%)";
+    let m = "", over = false;
+    if (k === "service") { const u = M.util[id] || 0; m = `${Math.round(u * 100)}% busy`; over = u > 1; }
+    else if (k === "queue") { const q = M.qinfo[id]; m = q.delayed ? `${fmtN(q.depth)} scheduled` : `${fmtN(q.depth)} waiting`; over = q.util > 1; }
+    else if (k === "partner") { m = UI.outage[id] ? "not answering" : `${fmtN(M.R.partnerCalls[id] || 0)} calls/s`; over = !!UI.outage[id]; }
+    else if (k === "database") m = `${fmtN(Object.entries(M.R.edge).filter(([e]) => e.endsWith(">" + id)).reduce((a, [, v]) => a + v, 0))} ${id.startsWith("cache:") ? "ops" : "queries"}/s`;
+    else if (k === "bus") m = `${(NODES[id].events || []).length} events`;
+    else m = `${fmtN(Object.entries(M.R.edge).filter(([e]) => e.startsWith(id + ">")).reduce((a, [, v]) => a + v, 0))} req/s`;
+    d.querySelector(".m").textContent = m;
+    d.classList.toggle("over", over); d.classList.toggle("hot", activeNodes.has(id) && !over);
+    d.classList.toggle("dim", !!focus && id !== focus);
+  }
+  // declutter: place labels by priority, nudge or hide the ones that collide
+  const PR = { service: 50, partner: 45, database: 40, app: 30, external: 30, queue: 35, bus: 20 };
+  const items = [];
+  for (const [id, d] of Object.entries(labels)) {
+    if (d.style.display === "none") continue;
+    const side = NODES[id].kind === "queue"; const w = d.offsetWidth, h = d.offsetHeight; const x = parseFloat(d.style.left), y = parseFloat(d.style.top);
+    let pr = PR[NODES[id].kind] || 10; if (d.classList.contains("over")) pr += 100; if (d.classList.contains("hot")) pr += 80; if (id === focus) pr += 200;
+    items.push({ id, d, side, w, h, x, y, pr });
+  }
+  items.sort((a, b) => b.pr - a.pr);
+  const placed = [];
+  const hit = (r) => placed.some((q) => r.x < q.x + q.w + 3 && r.x + r.w + 3 > q.x && r.y < q.y + q.h + 2 && r.y + r.h + 2 > q.y);
+  for (const it of items) {
+    const base = it.side ? { x: it.x + 6, y: it.y - it.h / 2 } : { x: it.x - it.w / 2, y: it.y - it.h };
+    let ok = null;
+    for (const dy of [0, -1, 1, -2, 2]) { const r = { x: base.x, y: base.y + dy * (it.h + 3), w: it.w, h: it.h }; const inside = r.x >= 4 && r.y >= 4 && r.x + r.w <= W - 4 && r.y + r.h <= H - 4; if (inside && !hit(r)) { ok = { r, dy }; break; } }
+    if (ok) { placed.push(ok.r); it.d.style.top = it.y + ok.dy * (it.h + 3) + "px"; it.d.style.visibility = ""; }
+    else it.d.style.visibility = "hidden";
+  }
+
+  // floor labels while exploded
+  if (focus && NODES[focus].kind === "service" && UI.explode > 0.3) {
+    const o = objs[focus];
+    o.floors.forEach((f, i) => {
+      let el = f.userData.el; if (!el) { el = f.userData.el = document.createElement("div"); el.className = "lbl"; el.style.transform = "translate(0,-50%)"; el.innerHTML = "<b></b>"; el.querySelector("b").textContent = f.userData.domain; labelBox.appendChild(el); }
+      const p = proj(pos[focus].clone().add(new THREE.Vector3(1.85, f.position.y, 1.4)));
+      el.style.display = ""; el.style.left = p.x + 8 + "px"; el.style.top = p.y + "px"; el.style.opacity = UI.explode;
+    });
+  }
+  Object.values(objs).forEach((o) => o.floors.forEach((f) => { if (f.userData.el && (!focus || objs[focus] !== o || UI.explode <= 0.3)) f.userData.el.style.display = "none"; }));
+
+  // ----- step panel + tag
+  if (cur) {
+    const [t1, t2] = sentence(cur.s);
+    $("#stepnow .k").textContent = `${cur.i + 1}/${UI.sched.items.length}`; $("#stepnow .t").textContent = t1 + " · " + t2;
+    const e = cur.s.evidence;
+    $("#stepev").innerHTML = e ? `<code class="f">${esc(e.file)}:${e.line}</code><code>${esc(e.code || "")}</code>` : "";
+    [...$("#chips").children].forEach((c, i) => { c.classList.toggle("now", i === cur.i); c.classList.toggle("done", i < cur.i); });
+    const nowChip = $("#chips").children[cur.i]; if (nowChip) $("#chips").scrollLeft = Math.max(0, nowChip.offsetLeft - 200);
+    if (showP) {
+      const p = proj(packet.position.clone());
+      const ms = hopMs(cur.s, UI);
+      tagEl.style.display = ""; tagEl.className = "tag" + (cur.s.failed || cur.s.branch === "failure" ? " bad" : "");
+      tagEl.style.left = p.x + "px"; tagEl.style.top = p.y - 10 + "px";
+      tagEl.innerHTML = `${esc(cur.s.label)} <em>${fmtMs(ms).join(" ")}${cur.s.kind === "partner" && UI.outage[cur.s.to] ? " (timeouts)" : ""}</em>`;
+    } else tagEl.style.display = "none";
+  } else {
+    tagEl.style.display = "none";
+    const beat = (mode === "tour" || mode === "record") ? UI._beat : null;
+    const cap = beat && !UI.sched ? beatCaption(beat, M) : null;
+    if (cap) { $("#stepnow .k").textContent = ""; $("#stepnow .t").textContent = cap[0]; $("#stepev").innerHTML = cap[1]; }
+    else if (!UI.sched) { $("#stepnow .k").textContent = ""; $("#stepnow .t").textContent = "Pick a request on the left to follow it through the system."; $("#stepev").innerHTML = ""; }
+  }
+  document.querySelectorAll(".flow").forEach((b, i) => b.classList.toggle("on", UI.flow === i && !!UI.sched && UI.flowT <= UI.sched.total));
+
+  // ----- head panel
+  const [bv, bu] = fmtMs(M.e2e);
+  $("#big").innerHTML = `${bv}<small>${bu}</small>`;
+  $("#bigcap").textContent = `${FLOWS[fi]?.title || ""}, end to end (est.)`;
+  $("#k-rps").textContent = fmtN(M.R.base);
+  $("#k-backlog").textContent = fmtN(M.backlog); $("#k-bl").classList.toggle("bad", M.backlog > 50);
+  $("#k-fail").textContent = fmtN(M.failing); $("#k-fl").classList.toggle("bad", M.failing > 0);
+  $("#loadv").textContent = (+UI.load).toFixed(UI.load < 10 ? 1 : 0) + "×";
+
+  // ----- gauges
+  for (const [id, row] of Object.entries(gRows)) {
+    const k = NODES[id].kind; let frac = 0, txt = "";
+    if (k === "service") { frac = M.util[id] || 0; txt = Math.round(frac * 100) + "%"; }
+    else if (k === "queue") { const q = M.qinfo[id]; frac = q.delayed ? 0.1 : q.util; txt = fmtN(q.depth); }
+    else if (k === "partner") { frac = UI.outage[id] ? 1.2 : clamp((M.R.partnerCalls[id] || 0) / 60, 0, 1); txt = UI.outage[id] ? "down" : fmtN(M.R.partnerCalls[id] || 0) + "/s"; }
+    row.querySelector("i").style.width = clamp(frac, 0.02, 1) * 100 + "%";
+    row.classList.toggle("warn", frac > 0.7 && frac <= 1); row.classList.toggle("over", frac > 1);
+    row.querySelector(".v").textContent = txt;
+  }
+  const bq = M.bottleneck;
+  $("#c1l").textContent = bq ? `Backlog · ${short(bq)}` : "Backlog";
+  $("#c1v").textContent = bq ? fmtN(S.depth[bq]) + " jobs" : "–";
+  $("#c2l").textContent = `End to end · ${FLOWS[fi]?.title || ""}`; $("#c2v").textContent = fmtMs(M.e2e).join(" ");
+  drawChart($("#c1"), S.hist.map((h) => h.backlog), M.backlog > 50 ? "#E0464C" : "#18202A");
+  drawChart($("#c2"), S.hist.map((h) => h.e2e), "#8A5A00", true);
+}
+function drawChart(cv, vals, color, log) {
+  const g = cv.getContext("2d"), w = cv.width, h = cv.height; g.clearRect(0, 0, w, h);
+  g.strokeStyle = "rgba(0,0,0,.08)"; g.lineWidth = 1; for (let i = 1; i < 4; i++) { g.beginPath(); g.moveTo(0, (h * i) / 4); g.lineTo(w, (h * i) / 4); g.stroke(); }
+  if (vals.length < 2) return;
+  const f = (v) => (log ? Math.log10(1 + v) : v);
+  const mx = Math.max(...vals.map(f), log ? 3 : 10);
+  g.beginPath(); vals.forEach((v, i) => { const x = (i / 239) * w, y = h - 6 - (f(v) / mx) * (h - 14); i ? g.lineTo(x, y) : g.moveTo(x, y); });
+  g.strokeStyle = color; g.lineWidth = 3; g.stroke();
+}
+
+/* =========================================================================
+   LOOP + recording hooks
+   ========================================================================= */
+let REC_T = 0, last = performance.now() / 1000;
+function fit() { const k = Math.min(innerWidth / W, innerHeight / H); stage.style.transform = `scale(${k})`; }
+addEventListener("resize", fit); fit();
+// warm every shader before the first visible frame
+renderer.compile(scene, camera);
+function loop() {
+  const now = performance.now() / 1000; const dt = Math.min(0.1, now - last); last = now;
+  if (mode !== "record") frame(now, dt);
+  requestAnimationFrame(loop);
+}
+window.__xray = {
+  duration: TOUR_LEN, beats: BEATS.map(({ kind, t0, dur }) => ({ kind, t0, dur })),
+  renderAt(t) { mode = "record"; REC_T = t; frame(t, 1 / 60); return true; },
+  hiddenImportant() { return Object.entries(labels).filter(([, d]) => d.style.visibility === "hidden" && (d.classList.contains("over") || d.classList.contains("hot"))).map(([id]) => id); },
+  labelRects() { return Object.entries(labels).filter(([, d]) => d.style.display !== "none" && d.style.visibility !== "hidden" && !d.classList.contains("dim")).map(([id, d]) => { const r = d.getBoundingClientRect(); return { id, x: r.left, y: r.top, w: r.width, h: r.height }; }); },
+  ready: true,
+};
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

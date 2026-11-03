@@ -1,0 +1,20 @@
+{
+  "version": 2, "repo": "go-shop", "stats": { "files": 2, "routes": 1, "events": 1, "listeners": 0, "queues": 0, "partners": 1 },
+  "nodes": [
+    { "id": "external:client", "kind": "external", "label": "API clients" },
+    { "id": "service:orders", "kind": "service", "label": "orders", "path": "internal/orders", "fileCount": 1, "domains": ["handler", "repo"],
+      "routes": [{ "method": "POST", "path": "/orders", "evidence": { "file": "internal/orders/handler.go", "line": 3, "code": "func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {" } }], "emits": [], "listens": [], "workers": [] },
+    { "id": "service:billing", "kind": "service", "label": "billing", "path": "internal/billing", "fileCount": 1, "domains": ["billing"], "routes": [], "emits": [], "listens": [], "workers": [] },
+    { "id": "db:sql", "kind": "database", "label": "Postgres", "models": ["orders"] },
+    { "id": "bus:events", "kind": "bus", "label": "NATS", "events": ["orders.created"] },
+    { "id": "partner:stripe", "kind": "partner", "label": "Stripe" }
+  ],
+  "edges": [],
+  "candidateFlows": [{ "id": "flow:orders:create", "title": "POST /orders", "steps": [
+    { "from": "external:client", "to": "service:orders", "kind": "http", "label": "POST /orders", "evidence": { "file": "internal/orders/handler.go", "line": 3 } },
+    { "from": "service:orders", "to": "db:sql", "kind": "db-write", "label": "orders.Insert", "evidence": { "file": "internal/orders/handler.go", "line": 4 } },
+    { "from": "service:orders", "to": "service:billing", "kind": "call", "label": "billing.Charge", "evidence": { "file": "internal/orders/handler.go", "line": 6 } },
+    { "from": "service:billing", "to": "partner:stripe", "kind": "partner", "label": "stripe.PaymentIntents.New", "evidence": { "file": "internal/billing/billing.go", "line": 4 } },
+    { "from": "service:orders", "to": "bus:events", "kind": "emit", "label": "orders.created", "evidence": { "file": "internal/orders/handler.go", "line": 7 } }
+  ] }]
+}

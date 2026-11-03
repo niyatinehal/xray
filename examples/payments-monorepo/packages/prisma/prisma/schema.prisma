@@ -1,0 +1,7 @@
+model Organization { id String @id }
+model Checkout { id String @id  status String }
+model Deposit { id String @id  amount Decimal }
+model Transaction { id String @id }
+model TransactionAttempt { id String @id }
+model Notification { id String @id }
+model Withdraw { id String @id }

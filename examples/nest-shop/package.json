@@ -1,0 +1,1 @@
+{ "name": "shopfront-api", "dependencies": { "@nestjs/core": "10", "@nestjs/typeorm": "10", "typeorm": "0.3", "pg": "8", "@nestjs/event-emitter": "2", "@nestjs/bull": "10", "bull": "4", "stripe": "14" } }
