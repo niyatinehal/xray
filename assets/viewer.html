@@ -17,7 +17,7 @@ html,body{margin:0;height:100%;background:#AEB8C2;overflow:hidden;font-family:ui
 #gl{position:absolute;inset:0;width:1600px;height:900px;display:block}
 #labels,#overlay{position:absolute;inset:0;pointer-events:none}
 .lbl{position:absolute;transform:translate(-50%,-100%);white-space:nowrap;font-size:12px;line-height:1.25;text-align:center;padding:3px 7px;border-radius:4px;background:rgba(248,250,252,.82);border:1px solid var(--line);pointer-events:auto;cursor:pointer;transition:opacity .25s}
-.lbl b{font-weight:650;font-size:12.5px}
+.lbl b{font-weight:650;font-size:12.5px;display:inline-block;max-width:186px;overflow:hidden;text-overflow:ellipsis;vertical-align:bottom}
 .lbl .m{color:var(--muted);font-variant-numeric:tabular-nums;font-size:11px}
 .lbl.hot{border-color:var(--accent);box-shadow:0 0 0 2px rgba(242,161,0,.25)}
 .lbl.over{border-color:var(--bad);color:var(--bad)}
@@ -377,32 +377,57 @@ serviceIds.sort().forEach((id) => { if (!order.includes(id)) order.push(id); });
 order.forEach((id, i) => (NCOL[id] = HUE[i % HUE.length]));
 for (const n of SYS.nodes) if (NCOL[n.id] == null) NCOL[n.id] = n.kind === "database" ? (n.id.startsWith("cache:") ? 0x60a5fa : KC.data) : n.kind === "bus" ? KC.event : n.kind === "queue" ? KC.job : n.kind === "partner" ? KC.outside : n.kind === "app" ? (HUE[(order.length + 2) % HUE.length]) : KC.request;
 const pos = {};
-const SP = 7.2;
+// Queues stand in a column in front of the service that owns them, so a busy
+// service never spills its tanks onto its neighbour. Everything else is spaced
+// from that footprint: services get room for their queue labels, the bus sits
+// in front of the deepest column, databases sit well behind.
+const qCount = {}; queueIds.forEach((q) => (qCount[NODES[q].owner] = (qCount[NODES[q].owner] || 0) + 1));
+const maxQ = Math.max(0, ...Object.values(qCount));
+const Q_GAP = 2.5, Q_Z0 = 3.8;
+const SP = queueIds.length ? 12 : 8;
+const ROW_GAP = 11 + maxQ * Q_GAP;
 const perRow = order.length > 8 ? Math.ceil(order.length / 2) : order.length;
 order.forEach((id, i) => {
   const row = Math.floor(i / perRow), col = i % perRow, n = Math.min(perRow, order.length - row * perRow);
-  pos[id] = new THREE.Vector3((col - (n - 1) / 2) * SP, 0, -row * 10);
+  pos[id] = new THREE.Vector3((col - (n - 1) / 2) * SP, 0, -row * ROW_GAP);
 });
 const xs = order.map((id) => pos[id].x);
 const minX = Math.min(...xs, 0), maxX = Math.max(...xs, 0);
-const BUS_Z = 6.2, DB_Z = -9 - (order.length > 8 ? 10 : 0);
+const backZ = Math.min(0, ...order.map((id) => pos[id].z));
+const frontZ = Q_Z0 + Math.max(0, maxQ - 1) * Q_GAP;
+const BUS_Z = maxQ ? frontZ + 3 : 6.2, DB_Z = backZ - 13;
+const midZ = (backZ + frontZ) / 2 - 1;
 const clients = SYS.nodes.filter((n) => n.kind === "app" || n.kind === "external");
-clients.forEach((n, i) => (pos[n.id] = new THREE.Vector3(minX - 11, 0, (i - (clients.length - 1) / 2) * 6)));
+clients.forEach((n, i) => (pos[n.id] = new THREE.Vector3(minX - 12, 0, midZ + (i - (clients.length - 1) / 2) * 7)));
 const parts = SYS.nodes.filter((n) => n.kind === "partner");
-parts.forEach((n, i) => (pos[n.id] = new THREE.Vector3(maxX + 13, 0, (i - (parts.length - 1) / 2) * 7 - 1)));
+parts.forEach((n, i) => (pos[n.id] = new THREE.Vector3(maxX + 14, 0, midZ + (i - (parts.length - 1) / 2) * 8.5)));
 const DBS = SYS.nodes.filter((n) => n.kind === "database");
-DBS.forEach((n, i) => (pos[n.id] = new THREE.Vector3((i - (DBS.length - 1) / 2) * 9, 0, DB_Z)));
+DBS.forEach((n, i) => (pos[n.id] = new THREE.Vector3((i - (DBS.length - 1) / 2) * 10, 0, DB_Z)));
 if (NODES["bus:events"]) pos["bus:events"] = new THREE.Vector3(0, 0.45, BUS_Z);
 const qByOwner = {};
 queueIds.forEach((q) => {
   const owner = NODES[q].owner; const k = (qByOwner[owner] = (qByOwner[owner] || 0) + 1) - 1;
   const o = pos[owner] || new THREE.Vector3(0, 0, 0);
-  pos[q] = new THREE.Vector3(o.x + 2.6 + k * 1.9, 0, o.z + 3.3);
+  pos[q] = new THREE.Vector3(o.x + 1.8, 0, o.z + Q_Z0 + k * Q_GAP);
 });
 
 // ---------- node meshes ----------
 const objs = {}; // id -> { group, mats:[], anchorY, floors:[], liquid, cap }
-function reg(id, group, anchorY) { objs[id] = { group, mats: [], anchorY, floors: [] }; group.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.userData.node = id; objs[id].mats.push(o.material); } }); scene.add(group); return objs[id]; }
+// crisp outlines on every solid so neighbouring blocks read as separate shapes
+const OUTLINE = 0x1b2129;
+function outline(mesh) {
+  const ln = new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry, 28), new THREE.LineBasicMaterial({ color: OUTLINE, transparent: true, opacity: 0.35 }));
+  ln.raycast = () => {}; mesh.add(ln); return ln.material;
+}
+function reg(id, group, anchorY) {
+  objs[id] = { group, mats: [], anchorY, floors: [] };
+  const meshes = []; group.traverse((o) => { if (o.isMesh) meshes.push(o); });
+  for (const o of meshes) {
+    o.castShadow = true; o.userData.node = id; objs[id].mats.push(o.material);
+    if (o.material.opacity > 0.5) objs[id].mats.push(outline(o));
+  }
+  scene.add(group); return objs[id];
+}
 
 for (const id of order) {
   const n = NODES[id]; const g = new THREE.Group(); g.position.copy(pos[id]);
@@ -581,7 +606,10 @@ partnersIds.forEach((p) => {
 // free area of the console (between the panels), in stage pixels
 const FREE = { x0: 372, x1: 1262, y0: 40, y1: 686 };
 camera.setViewOffset(W, H, W / 2 - (FREE.x0 + FREE.x1) / 2, H / 2 - (FREE.y0 + FREE.y1) / 2, W, H);
-function anchorPts(id) { const p = pos[id]; const h = NODES[id].kind === "service" ? 5 : NODES[id].kind === "partner" ? 5.5 : 3.5; return [p.clone(), p.clone().add(new THREE.Vector3(0, h, 0))]; }
+function anchorPts(id) { const k = NODES[id].kind; const p = pos[id]; const h = k === "service" ? 5 : k === "partner" ? 5.5 : 3.5; return [p.clone(), p.clone().add(new THREE.Vector3(0, h, 0))]; }
+// half a label's on-screen width (labels are capped at LBL_MAX px), so the fit keeps whole labels clear of the panels
+const LBL_MAX = 210;
+const labelHalf = (id) => Math.min(LBL_MAX, 24 + String(NODES[id].label || id).length * 7.4) / 2;
 // solve camera distance so every listed node lands inside the free area
 function fitView(ids, th, ph, pad = 0.9) {
   const bad = ids.filter((id) => !NODES[id] || !pos[id]);
@@ -589,19 +617,20 @@ function fitView(ids, th, ph, pad = 0.9) {
   ids = ids.filter((id) => NODES[id] && pos[id]);
   if (!ids.length) ids = Object.keys(pos).filter((id) => NODES[id]);
   const pts = ids.flatMap(anchorPts);
-  if (ids.includes("bus:events")) pts.push(busPoint(minX - 3), busPoint(maxX + 3));
+  const half = ids.flatMap((id) => [0, NODES[id].kind === "queue" ? labelHalf(id) * 2 : labelHalf(id)]);
+  if (ids.includes("bus:events")) { pts.push(busPoint(minX - 3), busPoint(maxX + 3)); half.push(0, 0); }
   const box = new THREE.Box3().setFromPoints(pts); const c = box.getCenter(new THREE.Vector3());
   let lo = 4, hi = 400;
   for (let i = 0; i < 30; i++) {
     const r = (lo + hi) / 2; applyCam({ th, ph, r, tx: c.x, ty: c.y * 0.4, tz: c.z }); camera.updateMatrixWorld();
-    const ok = pts.every((q) => { const v = q.clone().project(camera); const x = (v.x * 0.5 + 0.5) * W, y = (-v.y * 0.5 + 0.5) * H; const mx = (FREE.x1 - FREE.x0) * pad / 2, my = (FREE.y1 - FREE.y0) * pad / 2; return v.z < 1 && x > FREE.x0 + mx && x < FREE.x1 - mx && y > FREE.y0 + my + 28 && y < FREE.y1 - my; });
+    const ok = pts.every((q, i) => { const v = q.clone().project(camera); const x = (v.x * 0.5 + 0.5) * W, y = (-v.y * 0.5 + 0.5) * H; const mx = (FREE.x1 - FREE.x0) * pad / 2, my = (FREE.y1 - FREE.y0) * pad / 2; const hw = half[i]; return v.z < 1 && x - hw > FREE.x0 + mx && x + hw < FREE.x1 - mx && y > FREE.y0 + my + 28 && y < FREE.y1 - my; });
     ok ? (hi = r) : (lo = r);
   }
   return { th, ph, r: hi, tx: c.x, ty: c.y * 0.4, tz: c.z };
 }
 const ALL = Object.keys(objs);
 const VIEWS = {
-  Overview: fitView(ALL, 0.5, 0.96, 0.02),
+  Overview: fitView(ALL, 0.28, 0.9, 0.02),
   Top: fitView(ALL, 0.0, 0.12, 0.04),
 };
 if (NODES["bus:events"]) VIEWS["Event bus"] = fitView(["bus:events", ...order], 0.12, 1.28, 0.02);
@@ -636,7 +665,7 @@ for (const id of Object.keys(objs)) {
   d.className = "lbl k-" + n.kind; d.innerHTML = `<span class="dot" style="background:${hex(NCOL[id])}"></span><b></b><div class="m"></div>`;
   d.onmouseenter = () => { if (mode === "user") UI.hover = id; }; d.onmouseleave = () => { if (UI.hover === id) UI.hover = null; };
   d.ondblclick = (e) => { e.stopPropagation(); userAction(() => focusOn(id)); };
-  d.querySelector("b").textContent = n.kind === "queue" ? n.label : n.label;
+  d.querySelector("b").textContent = n.label; d.querySelector("b").title = n.label;
   d.onclick = (e) => { e.stopPropagation(); userAction(() => inspect(id)); };
   labelBox.appendChild(d); labels[id] = d;
 }
@@ -833,7 +862,7 @@ const surge = (() => {
 const BEATS = [];
 (function buildBeats() {
   const add = (b) => BEATS.push(b);
-  add({ kind: "intro", dur: 3.4, view: { ...VIEWS.Overview, th: 0.62, r: VIEWS.Overview.r * 1.06 } });
+  add({ kind: "intro", dur: 3.4, view: fitView(ALL, 0.4, 0.9, 0.02) });
   if (FLOWS[0]) add({ kind: "flow", flow: 0, dur: schedule(variantSteps(0, false), { load: 1, outage: {} }).total + 0.9, click: "#flow-0", view: VIEWS.Overview });
   add({ kind: "inspect", node: hub, dur: 5.2, clickNode: hub, view: fitView([hub], 0.45, 1.02, 0.55) });
   if (surge.q) add({ kind: "traffic", from: 1, to: surge.mult, dur: 7.5, drag: "#load", view: fitView([surge.q, NODES[surge.q].owner, ...NODES[surge.q].consumers].filter((x) => pos[x]), 0.3, 1.0, 0.3) });
@@ -844,7 +873,7 @@ const BEATS = [];
   }
   if (surge.q) add({ kind: "traffic", from: surge.mult, to: 1, dur: 3.2, drag: "#load", view: VIEWS.Overview });
   if (FLOWS[1]) add({ kind: "flow", flow: 1, dur: schedule(variantSteps(1, false), { load: 1, outage: {} }).total + 0.9, click: "#flow-1", view: VIEWS.Overview });
-  add({ kind: "outro", dur: 3.4, view: { ...VIEWS.Overview, th: 0.42, r: VIEWS.Overview.r * 1.04 } });
+  add({ kind: "outro", dur: 3.4, view: fitView(ALL, 0.36, 0.9, 0.02) });
   let t = 0; for (const b of BEATS) { b.t0 = t; t += b.dur; }
 })();
 const TOUR_LEN = BEATS.reduce((a, b) => a + b.dur, 0);
@@ -1106,7 +1135,7 @@ function frame(nowS, dt) {
     if (side) d.style.transform = "translate(6px,-50%)";
     let m = "", over = false;
     if (k === "service") { const u = M.util[id] || 0; m = `${Math.round(u * 100)}% busy`; over = u > 1; }
-    else if (k === "queue") { const q = M.qinfo[id]; m = q.delayed ? `${fmtN(q.depth)} scheduled` : `${fmtN(q.depth)} waiting`; over = q.util > 1; }
+    else if (k === "queue") { const q = M.qinfo[id]; m = q.depth < 0.5 ? "" : q.delayed ? `${fmtN(q.depth)} scheduled` : `${fmtN(q.depth)} waiting`; over = q.util > 1; }
     else if (k === "partner") { m = UI.outage[id] ? "not answering" : `${fmtN(M.R.partnerCalls[id] || 0)} calls/s`; over = !!UI.outage[id]; }
     else if (k === "database") m = `${fmtN(Object.entries(M.R.edge).filter(([e]) => e.endsWith(">" + id)).reduce((a, [, v]) => a + v, 0))} ${id.startsWith("cache:") ? "ops" : "queries"}/s`;
     else if (k === "bus") m = `${(NODES[id].events || []).length} events`;
