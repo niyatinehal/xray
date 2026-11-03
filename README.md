@@ -18,7 +18,7 @@ Open [`docs/demo.html`](docs/demo.html) in a browser to drive the example yourse
 ## Install
 
 ```bash
-git clone https://github.com/YOUR_GITHUB_USER/xray ~/.claude/skills/xray
+git clone https://github.com/niyatinehal/xray ~/.claude/skills/xray
 cd ~/.claude/skills/xray && npm install && npx playwright install chromium
 ```
 
